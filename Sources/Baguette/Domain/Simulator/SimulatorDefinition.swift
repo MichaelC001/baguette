@@ -16,7 +16,7 @@ import Foundation
 /// `kind:` discriminator, no capability tagged-union.
 ///
 /// Built by the pure `compose(from:chrome:urlPrefix:)` factory.
-/// Following CLAUDE.md's one-shot-fetch split, the irreducible
+/// Following AGENTS.md's one-shot-fetch split, the irreducible
 /// inputs (Simulator + DeviceChromeAssets) are fetched once, then
 /// handed to this factory; no `@Mockable` collaborator is needed
 /// because there is no conversational I/O.

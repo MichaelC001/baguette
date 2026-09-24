@@ -8,7 +8,7 @@ import Mockable
 /// One simulator + its chrome → one value-typed description of the
 /// parts the JS SDK will instantiate (`Simulator.screen`,
 /// `Simulator.buttons[*]`, …). This is the one-shot-fetch factory
-/// pattern from CLAUDE.md — no `@Mockable` collaborator needed.
+/// pattern from AGENTS.md — no `@Mockable` collaborator needed.
 @Suite("SimulatorDefinition.compose")
 struct SimulatorDefinitionTests {
 

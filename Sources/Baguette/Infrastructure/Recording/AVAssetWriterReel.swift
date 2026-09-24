@@ -12,7 +12,7 @@ import IOSurface
 /// lands`, `which frames make the cut`, `when to stop`) is already
 /// settled by `ScreenRecorder` and arrives here as a `CapturePlacement`
 /// and a presentation time; this type opens the writer, composites the
-/// surface onto the canvas, and appends. That split is CLAUDE.md's
+/// surface onto the canvas, and appends. That split is AGENTS.md's
 /// "conversational I/O" adapter pattern: the state machine is unit-tested
 /// through `MockReel`, and only the irreducible AVFoundation calls below
 /// stay integration-only.

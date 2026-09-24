@@ -21,10 +21,11 @@ Every other rule here follows from that goal. Each fact has exactly one home, so
 | `CHANGELOG.md` | 1,295 lines, 43 releases | Bullets average ~830 chars (longest 3,634); 108 of 130 are over 300. They name internal types, private symbols and file paths, which repeats the PR |
 | `docs/features/*.md` | 32 files, ~9.4k lines | 18 are over 200 lines. Usage, wire JSON, dispatch paths and reverse-engineering notes share one file, so users wade through HID constants and contributors can't find the research |
 | `CLAUDE.md` | 133 lines, loaded every session | Line count hides the size: each "Known iOS 26 limits" bullet is a full write-up (the HID-target one is ~2,000 chars) that also lives, in longer form, in its feature doc |
+| `AGENTS.md` | 135 lines | A hand copy of `CLAUDE.md` for other agents, already drifted: missing the Device Hub limit and the JS-testing rules |
 | `skills/baguette/references/` | `cli.md`, `wire-protocol.md` | Hand-copied from the README; a flag change means three edits |
 | Links | 0 broken | Nothing checks them, so that's luck |
 
-**Root cause:** every feature copies the same facts into several places (README CLI list + README section + feature doc + skill reference + long changelog bullet + CLAUDE.md limit). Copies are synced by hand and nothing checks that they are.
+**Root cause:** every feature copies the same facts into several places (README CLI list + README section + feature doc + skill reference + long changelog bullet + AGENTS.md limit). Copies are synced by hand and nothing checks that they are.
 
 ## Principle: docs load like Skills
 
@@ -32,7 +33,7 @@ Agent Skills stay cheap by loading content in three tiers, where each tier only 
 
 | Skill tier | Loaded | baguette docs equivalent |
 |---|---|---|
-| **1. Metadata** (`name` + `description`) | Always | `README.md`, `CLAUDE.md`, the `docs/README.md` index, CHANGELOG lines |
+| **1. Metadata** (`name` + `description`) | Always | `README.md`, `AGENTS.md`, the `docs/README.md` index, CHANGELOG lines |
 | **2. Instructions** (`SKILL.md` body) | When needed | `docs/features/<x>/README.md`: how to use one feature |
 | **3. Resources** (`references/`, `scripts/`) | On demand, by link | `docs/features/<x>/design.md` and topic files, generated `docs/commands.md`, `docs/wire.md` |
 
@@ -47,7 +48,7 @@ Rules:
 
 ```
 README.md                       tier 1: pitch, demo, install, quick start, feature table → links
-CLAUDE.md                       tier 1: agent rules only (TDD gate, layers, one-line limits → links)
+AGENTS.md                       tier 1: agent rules only (TDD gate, layers, one-line limits → links)
 CONTRIBUTING.md                 tier 1: build, test, where things go → links
 CHANGELOG.md                    tier 1: [Unreleased] + current minor only, one line per change → links
 docs/
@@ -110,7 +111,10 @@ Keeps: logo/badges, one-paragraph pitch, the demo, install (+ troubleshooting po
 | Why this works on iOS 26.4 | `docs/ARCHITECTURE.md` |
 | Build from source | `CONTRIBUTING.md` |
 
-### CLAUDE.md (≤100 lines, ≤12k chars)
+### AGENTS.md (≤100 lines, ≤12k chars)
+
+The one agent-instructions file. There is no `CLAUDE.md`: Claude Code reads `AGENTS.md` natively when a project has no `CLAUDE.md` (v2.1.277+), and two files were already drifting apart.
+
 
 Keeps: the TDD gate, the naming rules, build/test commands, the three-layer rule, and **one line per known limit** with a link.
 
@@ -152,7 +156,7 @@ Written for someone *using* the feature, human or agent. It contains only what `
 1. **Title + one-line summary**
 2. **Quick start**: the 2–4 commands of the happy path (CLI, and the page control if there is one)
 3. **Workflows**: end-to-end scripts for common jobs
-4. **HTTP / WebSocket**: route table + one example; the full message shapes are in `docs/wire.md`
+4. **HTTP / WebSocket**: the feature's own routes and messages, one example each. Gestures link to `docs/wire.md` instead of repeating it
 5. **Gotchas**: what will bite a user — iOS / Xcode version limits, "only apps launched after arming see it", "needs the sim booted"
 6. **See also**: `docs/commands.md#<cmd>`, `design.md`, related features
 
@@ -160,10 +164,10 @@ No flag tables (generated), no file maps, no type lists, no test snippets, no "E
 
 ## Tier 3: resources
 
-- **`docs/features/<x>/design.md`**: contributor-facing research for one feature. Why the private call is shaped this way, the constants and where they were measured, the ordering that matters, what was tried and failed. This is the home of today's "Why", "Dispatch path", "Where the (page, usage) numbers come from" and the long CLAUDE.md limits. Only features with such research have one.
+- **`docs/features/<x>/design.md`**: contributor-facing research for one feature. Why the private call is shaped this way, the constants and where they were measured, the ordering that matters, what was tried and failed. This is the home of today's "Why", "Dispatch path", "Where the (page, usage) numbers come from" and the long AGENTS.md limits. Only features with such research have one.
 - **`docs/features/<x>/<topic>.md`**: user-facing deep dives too long for the README (e.g. recording presets).
 - **`docs/commands.md`**: generated by `make docs` from `baguette --experimental-dump-help`. The only complete flag list; the skill links to it.
-- **`docs/wire.md`**, **`docs/serve.md`**: the JSON and route contracts. Hand-written because they can't be generated, and each is the one home: feature docs link to their section instead of repeating the shape.
+- **`docs/wire.md`**: the gesture wire shared by `baguette input` (stdin) and the stream WebSocket — gesture envelopes, stream-control messages, acks, coordinates. **`docs/serve.md`**: the route table of `baguette serve`, one row per route linking to the feature that owns it. A feature's *own* routes and messages (camera, logs, hinge, location…) live in that feature's README, their one home; `wire.md` and `serve.md` link to them rather than repeat them.
 - **Deleted, not moved**: file maps, source trees, type lists, test listings. The code is their one home.
 
 ## Reader paths
@@ -176,7 +180,7 @@ No flag tables (generated), no file maps, no type lists, no test snippets, no "E
 | Host plugin author | `docs/wire.md` |
 | Agent driving a sim | `baguette` skill → feature doc → `docs/commands.md` |
 | Contributor | CONTRIBUTING → `docs/ARCHITECTURE.md` → feature `design.md` → code |
-| Agent building a feature | CLAUDE.md → `baguette-implement-feature` skill → feature `design.md` |
+| Agent building a feature | AGENTS.md → `baguette-implement-feature` skill → feature `design.md` |
 
 ## Update rules
 
@@ -185,10 +189,10 @@ No flag tables (generated), no file maps, no type lists, no test snippets, no "E
 | New feature | `docs/features/<x>/README.md` with a `description`, one CHANGELOG line, `make docs` | README only if it's a new feature-table row |
 | New or changed flag | Nothing; `make docs` regenerates `commands.md` | |
 | New wire message or route | `docs/wire.md` or `docs/serve.md` section, one CHANGELOG line | |
-| Private-API finding | The feature's `design.md`; a one-line CLAUDE.md limit only if agents must know it on every task | |
+| Private-API finding | The feature's `design.md`; a one-line AGENTS.md limit only if agents must know it on every task | |
 | Bug fix | One CHANGELOG line; a Gotchas entry if users could hit it again | |
 
-Skills follow the same rule: `skills/baguette` carries the agent workflow and links to feature docs, `docs/commands.md` and `docs/wire.md` instead of copying them.
+Skills follow the same rule: `skills/baguette` carries the agent workflow. Because it is installed on its own, outside this repo, `make docs` copies `docs/commands.md` and `docs/wire.md` into its `references/` with absolute links; those copies are generated, never edited, and CI fails when they're stale.
 
 ## Enforcement
 
@@ -196,8 +200,8 @@ Skills follow the same rule: `skills/baguette` carries the agent workflow and li
 
 | Check | Limit |
 |---|---|
-| Line budgets | README ≤150, CLAUDE.md ≤100, `docs/features/*/README.md` ≤200 |
-| Char budget | CLAUDE.md ≤12,000 |
+| Line budgets | README ≤150, AGENTS.md ≤100, `docs/features/*/README.md` ≤200 |
+| Char budget | AGENTS.md ≤12,000 |
 | CHANGELOG bullet length in `[Unreleased]` | ≤300 chars, URLs excluded |
 | `CHANGELOG.md` holds only `[Unreleased]` + one minor | fails once a second minor appears (rollover forgotten) |
 | Every feature doc has a `description` | required, ≤250 chars |
@@ -212,10 +216,10 @@ Each step is its own commit in one PR, and the docs stay valid after each one.
 
 1. **Hygiene**: this design; split `CHANGELOG.md` into 0.2.x + `docs/changelog/0.1.md`; changelog rollover in the release workflow; `scripts/check-docs.py` in report-only mode.
 2. **Generation**: `make docs` builds `docs/commands.md` and `docs/README.md`.
-3. **Move**: `git mv docs/features/<x>.md docs/features/<x>/README.md` for all 32 features; a script rewrites links (including the skills, CLAUDE.md and source comments) and `check-docs.py` proves none broke. Mechanical, no content changes. Done before tier 1 so the new README links to final paths.
+3. **Move**: `git mv docs/features/<x>.md docs/features/<x>/README.md` for all 32 features; a script rewrites links (including the skills, AGENTS.md and source comments) and `check-docs.py` proves none broke. Mechanical, no content changes. Done before tier 1 so the new README links to final paths.
 4. **Tier 1**: slim README; add `CONTRIBUTING.md`, `docs/wire.md`, `docs/serve.md`.
 5. **Split**: per feature, add `description`, move research sections into `design.md`, keep usage + gotchas in `README.md`, delete file maps and flag tables. Parallelisable per feature.
-6. **CLAUDE.md + skills**: limits to one line each; checklists into `baguette-implement-feature`; `skills/baguette/references/` link instead of copy.
+6. **AGENTS.md + skills**: limits to one line each; checklists into `baguette-implement-feature`; `skills/baguette/references/` link instead of copy.
 7. **Enforce**: turn `check-docs.py --strict` on in CI.
 
 ## Decisions
@@ -228,10 +232,11 @@ Each one is judged by the goal: *does the next change touch fewer places?*
 | File maps, source tree, type lists | **Delete** | They copy the code, so every refactor would need a doc edit nobody makes |
 | Flag tables | **Delete; generate `docs/commands.md`** | Flags change with the code; generated means zero manual edits |
 | Wire protocol | **One hand-written `docs/wire.md`** | It's a contract with host plugins, not derivable from `--help`; today it lives in README, the skill and feature docs |
-| CLAUDE.md limits | **One line each + link** | The warning is needed every session; the explanation is needed only when touching that feature |
+| AGENTS.md limits | **One line each + link** | The warning is needed every session; the explanation is needed only when touching that feature |
 | Old CHANGELOG entries | **Keep the wording; new style going forward** | Rewriting history is work with no gain |
 | One CHANGELOG file vs rolling archive | **Current minor in `CHANGELOG.md`, older minors in `docs/changelog/<minor>.md`** | Tier 1 stays small; one scripted move per minor; CI catches a forgotten rollover |
 | Folder per feature vs flat file | **Folder per feature, `README.md` inside** | One path forever; `design.md` has an obvious place to live |
 | Frontmatter fields | **`description` only** | Every extra field has to be kept correct |
+| `CLAUDE.md` vs `AGENTS.md` | **`AGENTS.md` only** | Every agent reads it, Claude Code included (v2.1.277+). The old two-file setup had drifted within a month. Older Claude Code, or Bedrock / Vertex / Foundry sessions without native support, can add a local `CLAUDE.md` containing `@AGENTS.md` |
 | Hand-written vs generated index | **Generated** | Adding a feature touches one file instead of two |
 | Website HTML under `docs/` | **Out of scope** | Pages, not docs; moving them would break the published site for no gain here |

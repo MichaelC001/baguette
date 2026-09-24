@@ -19,7 +19,7 @@ Companion to [the design](README.md). Each file below is described from the **re
 | Calling `baguette serve` | Which routes exist? | `docs/serve.md` |
 | Contributing | How do I build, test, and where does code go? | `CONTRIBUTING.md` → `docs/ARCHITECTURE.md` |
 | Touching a feature's private-API path | Why is it built this way? What was tried? | `docs/features/<x>/design.md` |
-| An agent working in this repo | What must I never do? | `CLAUDE.md` |
+| An agent working in this repo | What must I never do? | `AGENTS.md` |
 
 ---
 
@@ -226,7 +226,7 @@ This is the file that has no asc-cli equivalent, because baguette's hard knowled
 - **The recipe and its constants**, with where each was measured: e.g. hinge `0xFF61`/`0x5B`, the HID targets the guest publishes, `IndigoHIDMessageForMouseNSEvent`'s 9 arguments.
 - **Ordering that matters**: e.g. `notifyutil -s … 0` *then* `kickstart backboardd`.
 - **Dead ends**: what was tried and why it doesn't work (`IndigoHIDTargetForScreen`, powering `primary-1` off), so nobody tries it again.
-- **Known limits**, in full. CLAUDE.md keeps one line that links here.
+- **Known limits**, in full. AGENTS.md keeps one line that links here.
 
 No budget: it's tier 3 and read on demand. It still links instead of copying: the wire shape is in `docs/wire.md`, the flags in `docs/commands.md`.
 
@@ -265,14 +265,14 @@ To improve a description, edit the `help:` string in Swift. That one edit fixes 
 **Who:** a host-plugin author driving `baguette input` over stdin, or a page talking to the stream WebSocket.
 **Their question:** *What exact JSON do I send, and what comes back?*
 
-The README's "Wire protocol" section and the scattered "Wire JSON" sections of feature docs, merged: one section per message, coordinates in device points, one example each. Feature docs link to `wire.md#<message>` instead of repeating it; `skills/baguette/references/wire-protocol.md` becomes a link.
+The README's "Wire protocol" section and `skills/baguette/references/wire-protocol.md`, merged: the gesture envelopes and stream-control messages `baguette input` and the stream WebSocket share, one section per message, coordinates in device points, one example each. Gesture feature docs (touches, buttons, double-tap…) link to `wire.md#<message>` instead of repeating it. Messages that belong to one feature (camera, logs, hinge, location) stay in that feature's README; `wire.md` lists them with a link.
 
 ## `docs/serve.md`
 
 **Who:** someone calling `baguette serve` over HTTP.
 **Their question:** *Which routes exist and what do they return?*
 
-The README's route tree and "one bidirectional WebSocket per stream", moved. `docs/ARCHITECTURE.md` keeps the *why*; this keeps the table.
+The README's route tree and "one bidirectional WebSocket per stream", moved: one row per route, linking to the feature README that documents it. `docs/ARCHITECTURE.md` keeps the *why*; this keeps the table.
 
 ## `docs/ARCHITECTURE.md`
 
@@ -290,17 +290,17 @@ Unchanged, and the one home for the layer diagram and the iOS 26 story (the READ
 ## Build & test          make · swift test · make test-web · Xcode 26.4.1+ on Apple Silicon
 ## Troubleshooting       moved from the README's Install section
 ## How code is organised 3 lines + link to docs/ARCHITECTURE.md
-## Rules                 TDD first, named abstractions (link to CLAUDE.md)
+## Rules                 TDD first, named abstractions (link to AGENTS.md)
 ## Docs                  the update-rules table, by link to docs/documentation-design/
 ```
 
-## `CLAUDE.md` (≤100 lines, ≤12k chars)
+## `AGENTS.md` (≤100 lines, ≤12k chars)
 
 **Who:** an AI agent at the start of *every* session in this repo.
 **Its question:** *What must I always or never do here?*
 
 ```markdown
-# CLAUDE.md
+# AGENTS.md
 ## TDD is non-negotiable      ← unchanged gate + naming + adapter split
 ## Build & test               ← ~8 lines
 ## Architecture               ← 3 layers, MainActor rule, points-not-normalized (~15 lines)

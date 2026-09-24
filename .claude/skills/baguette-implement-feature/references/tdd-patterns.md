@@ -15,7 +15,7 @@ boundary lives behind `@Mockable`).
 | Focus on "what" (outcomes)            | Focus on "how" (call sequences)          |
 | Design emerges from tests             | Design upfront, tests verify design      |
 
-CLAUDE.md is explicit: *"Chicago-school state-based throughout. Every
+AGENTS.md is explicit: *"Chicago-school state-based throughout. Every
 external boundary is an `@Mockable` protocol; tests substitute
 auto-generated `MockXxx` fakes and assert on returned values rather
 than recorded calls."* When you do call `verify(...)`, it's the

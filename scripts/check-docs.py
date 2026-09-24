@@ -9,8 +9,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-BUDGETS = {"README.md": 150, "CLAUDE.md": 100}
-CHAR_BUDGETS = {"CLAUDE.md": 12_000}
+BUDGETS = {"README.md": 150, "AGENTS.md": 100}
+CHAR_BUDGETS = {"AGENTS.md": 12_000}
 FEATURE_BUDGET = 200
 DESCRIPTION_CHARS = 250
 BULLET_CHARS = 300

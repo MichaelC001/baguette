@@ -4,7 +4,7 @@ import Foundation
 /// Simulator.app's own preferences domain.
 ///
 /// This is the integration-only half of the `SimulatorLifetime` split
-/// described in CLAUDE.md: the three irreducible calls are the
+/// described in AGENTS.md: the three irreducible calls are the
 /// `CFPreferences` read, the `CFPreferences` write, and the
 /// `NSRunningApplication` lookup. Everything that decides *what those
 /// values mean* lives in `SimulatorLifetime` and is unit-covered.

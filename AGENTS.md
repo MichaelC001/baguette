@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+Guidance for every coding agent working in this repository (Claude Code reads this file too). It holds the rules that apply to every task; everything else is one link away, loaded only when relevant.
 
 ## TDD is non-negotiable (read this first)
 
@@ -40,41 +40,26 @@ The naming bar is the same for both: **collaborators are domain nouns, never pat
 
 **~100% of Domain.** Every Domain value type, every static factory, every `@Mockable` collaborator's behaviour-spec is covered.
 
-**Infrastructure adapters split as above.** The orchestrator inside the adapter is unit-tested via the collaborator's `MockXxx`; only the irreducible call lines stay uncovered. Concretely: in `AXPTranslatorAccessibility`, the `dlopen` + `+sharedInstance` + `frontmostApplicationWithDisplayId:` + `macPlatformElementFromTranslation:` four-line dance is the only integration-only block — everything else (the walk, the transform, the value extractors, the dispatcher's lifecycle) lives in `Domain/` and is unit-covered. In `SimDeviceLogStream`, the `Process.run` + `kill(pid)` lines are integration-only; the state machine + `LineBuffer` flush are covered via `MockSubprocess`. New code must include the unit-testable portion before it lands.
+**Infrastructure adapters split as above.** The orchestrator is unit-tested via the collaborator's `MockXxx`; only the irreducible call lines stay uncovered — in `AXPTranslatorAccessibility` the four-line `dlopen` → `frontmostApplicationWithDisplayId:` dance, in `SimDeviceLogStream` just `Process.run` + `kill(pid)`. New code includes its unit-testable portion before it lands.
 
-**If you skip the gate, you are violating the project's primary rule.** The Chicago-school workflow, value-type domain, and `@Mockable` collaborator pattern are described in [Testing approach](#testing-approach).
+**Skipping the gate violates the project's primary rule.** The Chicago-school workflow is under [Testing approach](#testing-approach).
 
 ## Build & test
 
 ```bash
-make                                          # release build via ./build.sh → ./Baguette
-swift build                                   # debug build (carries MOCKING flag + mocks)
-swift test                                    # full Swift Testing suite (110+ tests, no booted sim required)
-swift test --filter Simulators                # one suite
-swift test --filter "GestureRegistry/parses tap"   # one test
+swift build                                        # debug build (carries MOCKING flag + mocks)
+swift test --filter "<SuiteName>"                  # the fastest red/green loop
+swift test                                         # the whole Swift Testing suite, no booted sim required
+make test-web                                      # Resources/Web/ unit tests (node --test)
 ```
 
-Hybrid build: pure SPM with `-F` / `-rpath` flags into Xcode private frameworks (`CoreSimulator`, `SimulatorKit`, `IOSurface`, `VideoToolbox`, `CoreGraphics`, `ImageIO`). `build.sh` does `swift build -c release` then copies the binary to `./Baguette`. Targets `arm64e-apple-macos26.0`; requires Xcode 26 + Apple Silicon.
-
-Tests use **Swift Testing** (`@Suite`, `@Test`, `#expect`) — never XCTest. `MOCKING` is `.debug`-only so release builds carry no mock code (don't reach for `MockXxx` outside the test target).
+Every other target (`make`, `make docs`, `make check-docs`, …) and the toolchain requirement are in [CONTRIBUTING.md](CONTRIBUTING.md#build--test). Tests use **Swift Testing** (`@Suite`, `@Test`, `#expect`) — never XCTest. `MOCKING` is `.debug`-only so release builds carry no mock code (don't reach for `MockXxx` outside the test target).
 
 ## Architecture
 
-Three-layer split with strict inward-flowing imports: `App` → `Domain` + `Infrastructure`; `Infrastructure` → `Domain`; `Domain` depends only on Foundation + IOSurface.
+Three-layer split with strict inward-flowing imports: `App` (CLI dispatch + use-case orchestration) → `Domain` (pure Swift value types + `@Mockable` abstractions) + `Infrastructure` (the only place private-API code lives); `Infrastructure` → `Domain`; `Domain` depends only on Foundation + IOSurface. `Domain/` and `Infrastructure/` split into the same bounded contexts, so a feature lives in one place across both, and `Tests/BaguetteTests/` mirrors them. `Resources/Web/` holds the vanilla IIFE modules `baguette serve` serves.
 
-```
-Sources/Baguette/
-├── App/                CLI dispatch (ArgumentParser) + use-case orchestration
-├── Domain/             pure Swift; value types + @Mockable abstractions named after their domain role
-├── Infrastructure/     concrete @Mockable abstraction impls (private-API code lives here only)
-└── Resources/Web/      vanilla IIFE modules served by `baguette serve`
-```
-
-`Domain/` and `Infrastructure/` are split into bounded contexts (`Simulator/`, `Input/`, `Screen/`, `Stream/`, `Chrome/`) that mirror across both layers — a feature lives in one place across both. `Tests/BaguetteTests/` mirrors the same split.
-
-### Two consumers, one pipeline
-
-Both `baguette input` (stdin JSON, used by host plugins as a long-lived subprocess) and `baguette serve` (browser WS) funnel into the same `GestureDispatcher` → `Input` → `IndigoHIDInput`. The only difference is the App-layer entry point.
+**Two consumers, one pipeline.** Both `baguette input` (stdin JSON, used by host plugins as a long-lived subprocess) and `baguette serve` (browser WS) funnel into the same `GestureDispatcher` → `Input` → `IndigoHIDInput`. The only difference is the App-layer entry point.
 
 ### The crucial detail: 9-arg `IndigoHIDMessageForMouseNSEvent`
 
@@ -82,23 +67,9 @@ iOS 26 changed `SimulatorHID`'s wire format. The 5-arg signature used by `idb` /
 
 `IndigoHIDMessageForMouseNSEvent` reads AppKit / NSEvent thread-local state, so it **must run on `MainActor`**. Calling it from a NIO event-loop thread builds malformed messages that the simulator silently drops. `Server.streamWS` hops to `MainActor` before invoking `GestureDispatcher`. Buttons (`IndigoHIDMessageForButton`) are pure C and thread-safe — useful as a sanity check when input fails.
 
-### Coordinate conventions
-
-Wire-level coordinates (`x`, `y`, `startX`, `endX`, `x1`, `x2`, `cx`, `cy`) are in **device points**, same units as the `width` / `height` carried in every gesture envelope. Browser-side `SimInput` works in normalized [0, 1] internally; `sim-stream.js` multiplies by `width` / `height` before serialising. `IndigoHIDInput.sendMouse` divides by size internally before handing to the C function. Wire is points, not normalized.
-
-### Extensibility hot spots
-
-- New gesture: one `Gesture`-conforming struct in `Domain/Input/` + one line in `GestureRegistry.standard`.
-- New stream format: one `Stream` impl in `Infrastructure/Stream/` + one case in `StreamFormat.makeStream`. Envelope formats live in `Domain/Stream/Envelope.swift`.
-- New web UI piece: a single-purpose IIFE in `Resources/Web/` that hangs one class on `window`, loaded by `<script>` tag in `sim.html`. No bundler / module graph.
-
-### `baguette serve` route surface
-
-Single resource tree, no `/api/` prefix; UDID always in path; format distinguished by extension. One bidirectional WebSocket per stream carries encoded binary frames (server→browser) and JSON text messages (browser→server) for both stream control (`set_bitrate` / `set_fps` / `set_scale` / `force_idr` / `snapshot`) and gestures. `Server` is intentionally dumb — UI lives in `Resources/Web/`. `BAGUETTE_WEB_DIR` overrides the served root for live-iteration without rebuilding.
+**Coordinates.** Wire coordinates (`x`, `y`, `startX`, `x1`, `cx`, …) are **device points**, the units of the `width` / `height` every gesture envelope carries — never normalized. The browser normalizes internally and `sim-stream.js` multiplies back before sending; `IndigoHIDInput.sendMouse` divides by size before the C call.
 
 ## Testing approach
-
-**TDD first.** Write the failing test before the implementation — every behaviour change to a Domain or Infrastructure type starts with a red `@Test`, then the smallest impl that turns it green, then refactor. Don't ship parser / aggregate / serialization changes ahead of their tests, even when "obvious"; the codebase's confidence rests on the test suite covering each new field at the moment it lands. JS modules under `Resources/Web/` have no test harness — keep their changes minimal and exercise them through the Swift layer that produces their JSON inputs.
 
 Chicago-school state-based throughout. Every external boundary is an `@Mockable` protocol; tests substitute auto-generated `MockXxx` fakes and assert on returned values rather than recorded calls. Patterns:
 
@@ -106,30 +77,22 @@ Chicago-school state-based throughout. Every external boundary is an `@Mockable`
 - Per-gesture parse + execute — verify wire dialect parses to the right value type and `execute(on: input)` calls the right `Input` method.
 - Aggregate semantics — drive `MockSimulators` / `MockChromes` through default-impl computed properties (`running`, `available`, `listJSON`).
 
-## Known iOS 26 limits
+## Known limits
 
-- `key` / `type` keyboard input — not yet on the host-HID path; routed through external tooling.
-- `siri` button — crashes `backboardd` via every known Indigo path; explicitly rejected.
-- Single-finger streaming (`touch1-*`) routes correctly but `UIPinchGestureRecognizer` treats it as an interactive pan; prefer `touch2-*` for pinch / multi-finger.
-- `CLHeading` (the magnetometer compass) — unavailable in the simulator entirely: `CLLocationManager.headingAvailable()` returns `false`, and no simctl verb or private API changes it. Only `CLLocation.course` (direction of travel) is drivable, via a travelled `location start` route — see `docs/features/location/README.md`.
-- `CLLocation.course` skews on diagonal bearings — locationd derives it as `atan2(Δlon, Δlat)` on **raw degrees**, omitting the `cos(latitude)` convergence of meridians. A geodesically-correct due-NE route reports `Course,51.52` instead of 45° at lat 37 (0° at the equator, ~18° at lat 60); cardinal bearings are exact. Movement *is* on a true globe, so correct positions force a wrong course — the two can't both be right. baguette keeps positions truthful and documents the skew; don't "fix" it by projecting the device off-course.
+One line each; the research behind every line is in the linked `design.md`. Read it before touching that path.
 
-## Further reading
+- **Xcode 27's Device Hub shadows the legacy input surface.** `baguette boot` / `heal` repair it with `notifyutil -s … 0` *then* a backboardd kickstart, in that order; don't try to prevent it during boot (#77) → [device-hub](docs/features/device-hub/design.md)
+- **A HID target is only a constant some create-service message registered, never computed.** An unknown target kills backboardd; `IndigoHIDTargetForScreen` is a trap → [companion-screens](docs/features/companion-screens/design.md)
+- **iPhone Duo: the hinge decides which of two panels is lit.** `0x32` is a slot, not the cover; never power a screen off; its keys go through `dtuhidd`, not Indigo → [iphone-duo](docs/features/iphone-duo/design.md), [hinge](docs/features/hinge/design.md)
+- **`key` / `type` are US-ASCII only** (HID page 7); anything else goes through `paste` → [keyboard](docs/features/keyboard/design.md)
+- **`siri` crashes backboardd** via every known Indigo path; it is rejected → [buttons](docs/features/buttons/design.md)
+- **`touch1-*` pinches read as a pan** to `UIPinchGestureRecognizer`; use `touch2-*` → [touches](docs/features/touches/design.md)
+- **`CLHeading` is unavailable**; only `CLLocation.course` is drivable, and it skews on diagonal bearings. Keep positions truthful; don't "fix" the course → [location](docs/features/location/design.md)
+- **CoreMotion is reachable only by injection**, so only apps launched after arming see it → [motion](docs/features/motion/design.md)
 
-- `README.md` — quickstart, full CLI reference, wire protocol JSON examples.
-- `docs/ARCHITECTURE.md` — end-to-end tap-to-`UITouch` flow, layer diagrams, route table.
-- `Sources/Baguette/Infrastructure/Input/IndigoHIDInput.swift` — the 9-arg recipe.
+## When you are…
 
-
-## Learned User Preferences
-
-- Prefers pstack (`/poteto-mode` and related skills) for non-trivial baguette work; when other models are rate-limited, restrict pstack roles to composer-2.5 and cursor-grok-4.5-medium.
-- For CarPlay in the serve UI: side-by-side dual-pane (phone next to CarPlay), plain 2D rect chrome first, Figma/3D dash later, leave driving/zoom to the CarPlay app, and auto-enable CarPlay on stream start.
-
-## Learned Workspace Facts
-
-- pstack is enabled in `.cursor/settings.json`; per-role model overrides live in `~/.cursor/rules/pstack-models.mdc`.
-- Planned CarPlay support treats CarPlay as a second display surface (external framebuffer + separate HID target), not embedding CarPlay Simulator.app; dual-pane prefers two WebSocket streams (`phone` and `carplay`).
-- Phone Indigo HID digitizer `0x32` does not deliver touches to CarPlay; CarPlay HID must use `IndigoHIDTargetForScreen` from the live connected screen id (creatable screen id is not always the connected id).
-- CarPlay enablement on the host simulator is via I/O → External Displays → CarPlay (AppleScript / Accessibility).
-- A prior CarPlay spike lives at `~/Developer/sim_carplay` (enablement, ~800×480 external capture, HID target derivation).
+- **adding a feature** (gesture, route, CLI verb, stream format, web UI piece) → the `baguette-implement-feature` skill: phases, extensibility hot spots, JS testing conventions, doc rules
+- **changing a route or the gesture wire** → [docs/serve.md](docs/serve.md), [docs/wire.md](docs/wire.md)
+- **touching docs** → [docs/documentation-design/](docs/documentation-design/README.md)
+- **following a tap end to end** → [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md); the 9-arg recipe itself is commented in `Sources/Baguette/Infrastructure/Input/IndigoHIDInput.swift`

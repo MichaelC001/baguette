@@ -13,7 +13,7 @@ swift test               # the Swift Testing suite; no booted simulator needed
 swift test --filter Simulators                   # one suite
 swift test --filter "GestureRegistry/parses tap" # one test
 make test-web            # JS unit tests for Resources/Web/ (node --test)
-make docs                # regenerate docs/commands.md and docs/README.md
+make docs                # regenerate docs/commands.md, docs/README.md, the skill references
 make check-docs          # links, line budgets, changelog shape
 make test-changelog      # the release-time changelog scripts
 ```
@@ -45,16 +45,14 @@ Three layers with imports flowing inward: `App/` (CLI + use-case orchestration) 
 
 ## Rules
 
-- **TDD first, always.** Every behaviour change to a Domain or Infrastructure type starts with a failing `@Test`, then the smallest change that turns it green. The pre-implementation gate in [CLAUDE.md](CLAUDE.md#tdd-is-non-negotiable-read-this-first) applies to people as much as to agents.
-- **Name abstractions for their role in the domain** (`Simulators`, `Input`, `Subprocess`), never `XxxPort` / `XxxService` / `XxxManager`. Details in [CLAUDE.md](CLAUDE.md#naming-the-abstractions).
+- **TDD first, always.** Every behaviour change to a Domain or Infrastructure type starts with a failing `@Test`, then the smallest change that turns it green. The pre-implementation gate is in [AGENTS.md](AGENTS.md#tdd-is-non-negotiable-read-this-first).
+- **Name abstractions for their role in the domain** (`Simulators`, `Input`, `Subprocess`), never `XxxPort` / `XxxService` / `XxxManager`. Details in [AGENTS.md](AGENTS.md#naming-the-abstractions).
 
 ## Testing
 
-Tests use **Swift Testing** (`@Suite`, `@Test`, `#expect`), never XCTest. They are Chicago-school and state-based: every external boundary is an `@Mockable` protocol, tests substitute the generated `MockXxx` fakes, and they assert on returned values rather than recorded calls.
+The rules — Swift Testing, never XCTest; Chicago-school, state-based; every boundary an `@Mockable` protocol faked with its generated `MockXxx` — are in [AGENTS.md](AGENTS.md#testing-approach), and apply to people as much as to agents. JS conventions for `Resources/Web/` are in [js-testing.md](.claude/skills/baguette-implement-feature/references/js-testing.md).
 
 Adapters over private SimulatorKit / CoreSimulator / AccessibilityPlatformTranslation symbols take `any DeviceHost` rather than the concrete simulator aggregate, so their error paths (not booted, idempotent stop, host gone) are unit-tested via `MockDeviceHost` without a booted simulator. Only the irreducible private-API call stays integration-only, smoke-tested through the CLI and the `serve` UI against a booted simulator.
-
-`MOCKING` is set for `.debug` only, so release builds carry no mock code; don't use `MockXxx` outside the test target.
 
 ## Docs
 

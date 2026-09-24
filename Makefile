@@ -4,7 +4,7 @@ Baguette:
 test-web:
 	node --test 'Tests/Web/**/*.test.js'
 
-# Regenerate docs/commands.md and docs/README.md (never edit those by hand)
+# Regenerate docs/commands.md, docs/README.md and the baguette skill references (never edit those by hand)
 docs:
 	swift build
 	python3 scripts/gen-docs.py .build/debug/Baguette

@@ -17,7 +17,7 @@ import Foundation
 /// toolchain (Expo, `xcrun simctl` wrappers, Xcode itself) opening
 /// Simulator.app on your behalf.
 ///
-/// Per CLAUDE.md's one-shot-fetch split, everything downstream of the
+/// Per AGENTS.md's one-shot-fetch split, everything downstream of the
 /// fetched plist lives here as a pure factory; the irreducible
 /// `CFPreferences` read/write pair is the only Infrastructure code.
 struct SimulatorLifetime: Equatable, Sendable {

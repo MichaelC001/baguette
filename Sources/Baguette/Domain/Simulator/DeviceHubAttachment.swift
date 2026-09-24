@@ -19,7 +19,7 @@ import Foundation
 /// The notify state is the whole detection: it is cheap to read from the
 /// host (`simctl spawn <udid> notifyutil -g …`), and `1` means the surface
 /// has been shadowed at least once in this backboardd's lifetime, which is
-/// exactly the condition that needs healing. Per CLAUDE.md's one-shot-fetch
+/// exactly the condition that needs healing. Per AGENTS.md's one-shot-fetch
 /// split, the parse lives here; the spawn is `SimctlInputSurface`'s.
 struct DeviceHubAttachment: Equatable, Sendable {
     /// The Darwin notify key `dtuhidd` sets to `1` on start. Spelling is the
