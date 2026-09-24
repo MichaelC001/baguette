@@ -63,35 +63,13 @@ powering it *off* crash-loops SpringBoard.
 
 ## The hinge
 
-Device Hub folds and unfolds the Duo from the pose picker at the bottom of its
-window (closed ≈3°, open ≈130°; SpringBoard goes landscape on its own when
-open). It goes over CoreDevice's `UniversalHID`, which lands in the guest daemon
-`dtuhidd` as vendor-defined IOHIDEvents (page `0xFF61`, usage `0x5B`, a keyed
-record with `source: hinge-slider-control`, `value: <degrees>`) on its
-`avpCustom` virtual HID service → `kIOHIDEventTypeHingeAngle` → CoreMotion →
-SpringBoard's pose provider, and SpringBoard decides which panel to light.
-
-**Driving** it: baguette reproduces exactly those events from a guest-side
-executable, `HingeControl serve`, swept over Device Hub's 0.8 s; the recipe is
-in [hinge](../hinge/README.md). The SpringBoard shim tried first (swizzling `CMAngleManager` to
-feed fabricated `CMAngle`s) worked too but needed an injected dylib and a
-SpringBoard restart; it is not shipped.
-
-**Reading** it:
-
-```bash
-xcrun devicectl device motion hinge-angle --device <UDID> --timeout 5
-```
-
-The first sample is the current angle and lands in ~0.3 s; `DevicectlHinge`
-takes it and terminates the monitor. `HingeAngle.litPanel` puts the swap at 90°.
-Only a device with more than one portrait panel (`IntegratedPanels.several`)
-ever asks — a phone pays nothing.
-
-The hinge's motion stream can stop after a SpringBoard restart
-(`baguette heal`) — `devicectl` then reports nothing until Device Hub moves the
-pose — and the shared hinge remembers such silence for three seconds rather than
-making every caller wait it out.
+The hinge decides which panel is lit: SpringBoard lights one from the angle
+Device Hub's pose picker sets (closed ≈3°, open ≈130°). baguette both drives
+and reads it; how, byte for byte, is in [hinge/design.md](../hinge/design.md).
+What matters here is the one number the panel binding keys on:
+`HingeAngle.litPanel` puts the swap at 90°, and only a device with more than
+one portrait panel (`IntegratedPanels.several`) ever asks, so a phone pays
+nothing.
 
 ## Framebuffer: the lit panel
 
@@ -141,19 +119,10 @@ guest down.
 
 ## Hardware keys: through `dtuhidd`, not Indigo
 
-**The Duo's hardware keys do not take the legacy Indigo press**: it reaches
-backboardd on a touchscreen service and SpringBoard ignores it. Device Hub
-presses them as keyboard events on `dtuhidd`'s `mainScreenButtons` service
-(page `0x0B` / usage `0x01`, built-in):
-
-| Key | Page / usage |
-|---|---|
-| Volume up / down | `0x0C` / `0xE9`, `0xEA` |
-| Power | `0x0C` / `0x30` |
-| Camera control | `0xFF00` / `0x66` |
-
-`HingeControl button` does the same, and `FoldableInput` routes a foldable's
-buttons there (`DeviceKeys`). See [hinge](../hinge/README.md).
+The Duo ignores the legacy Indigo button press; its keys go through
+`dtuhidd`'s `mainScreenButtons` service instead, pressed by `HingeControl`.
+The measured usages and the routing (`FoldableInput` → `DeviceKeys`) are in
+[hinge/design.md](../hinge/design.md#the-hardware-keys-go-the-same-way).
 
 ## Chrome, tap space and accessibility
 

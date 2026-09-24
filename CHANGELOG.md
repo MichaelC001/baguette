@@ -10,6 +10,9 @@ For releases prior to this changelog, see the
 
 ## [Unreleased]
 
+### Fixed
+- `baguette stream --help` no longer offers an `h264` format it rejects, and `baguette logs --help` lists the levels (`default`, `info`, `debug`) and styles (including `ndjson`) it actually accepts.
+
 ### Changed
 - `CHANGELOG.md` now holds only the current minor; the 0.1.x history moved unchanged to `docs/changelog/0.1.md`.
 - Docs reorganised: a short README, one guide per feature under `docs/features/<name>/`, a generated command reference in `docs/commands.md`, and `docs/wire.md` for the gesture JSON. Several examples that never ran are fixed.

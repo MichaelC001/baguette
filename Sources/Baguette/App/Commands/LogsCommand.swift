@@ -17,12 +17,17 @@ struct LogsCommand: AsyncParsableCommand {
         abstract: "Stream the booted simulator's unified log to stdout"
     )
 
+    /// The values `--level` / `--style` accept, read off the domain so
+    /// help and error text can't drift from what `LogFilter` parses.
+    static let levels = LogFilter.Level.allCases.map(\.rawValue).joined(separator: " | ")
+    static let styles = LogFilter.Style.allCases.map(\.rawValue).joined(separator: " | ")
+
     @OptionGroup var options: DeviceOption
 
-    @Option(help: "Minimum log level: debug | info | notice | error | fault")
+    @Option(help: "Minimum log level: \(Self.levels)")
     var level: String = "info"
 
-    @Option(help: "Output style: default | compact | json | syslog")
+    @Option(help: "Output style: \(Self.styles)")
     var style: String = "default"
 
     @Option(help: "NSPredicate string passed to `log stream --predicate` verbatim")
@@ -34,11 +39,11 @@ struct LogsCommand: AsyncParsableCommand {
 
     func run() async throws {
         guard let lvl = LogFilter.Level(wire: level) else {
-            log("logs: invalid --level '\(level)' (use debug | info | notice | error | fault)")
+            log("logs: invalid --level '\(level)' (use \(Self.levels))")
             throw ExitCode.failure
         }
         guard let sty = LogFilter.Style(wire: style) else {
-            log("logs: invalid --style '\(style)' (use default | compact | json | syslog)")
+            log("logs: invalid --style '\(style)' (use \(Self.styles))")
             throw ExitCode.failure
         }
 

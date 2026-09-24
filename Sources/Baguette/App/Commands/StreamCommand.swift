@@ -4,12 +4,12 @@ import Foundation
 struct StreamCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "stream",
-        abstract: "Stream framebuffer to stdout (mjpeg / h264 / avcc). Reads runtime config commands from stdin."
+        abstract: "Stream framebuffer to stdout (mjpeg / avcc). Reads runtime config commands from stdin."
     )
 
     @OptionGroup var options: DeviceOption
 
-    @Option(help: "Output format: mjpeg | h264 | avcc")
+    @Option(help: "Output format: \(StreamFormat.allCases.map(\.rawValue).joined(separator: " | "))")
     var format: String = "mjpeg"
 
     @Option(help: "Frames per second")

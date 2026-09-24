@@ -882,6 +882,25 @@ struct CommandParsingTests {
         #expect(cmd.output == "/tmp/tree.json")
     }
 
+    // MARK: - help lists what the command accepts
+
+    @Test func `stream --format help lists only the formats a stream accepts`() {
+        let help = StreamCommand.helpMessage(columns: 400)
+        #expect(help.contains("Output format: mjpeg | avcc"))
+        #expect(!help.contains("h264"))
+    }
+
+    @Test func `logs --level help lists only the levels the simulator log accepts`() {
+        let help = LogsCommand.helpMessage(columns: 400)
+        #expect(help.contains("Minimum log level: default | info | debug"))
+        #expect(!help.contains("notice"))
+    }
+
+    @Test func `logs --style help lists every style the log stream accepts`() {
+        let help = LogsCommand.helpMessage(columns: 400)
+        #expect(help.contains("Output style: default | compact | json | syslog | ndjson"))
+    }
+
     // MARK: - logs
 
     @Test func `logs requires --udid and defaults level + style`() throws {

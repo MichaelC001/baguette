@@ -83,7 +83,15 @@ light. baguette reads it with `devicectl device motion hinge-angle`
 (`IntegratedPanels.several`) ever asks. Device Hub's closed pose reads
 ≈3°, its open pose ≈130°; SpringBoard goes landscape on its own when
 open. `devicectl`'s hinge stream can go silent after a SpringBoard
-restart. What the lit panel binds (framebuffer, digitizer, chrome, tap
+restart (`baguette heal`) — it then reports nothing until Device Hub
+moves the pose — so the shared hinge remembers such silence for three
+seconds rather than making every caller wait it out. By hand:
+
+```bash
+xcrun devicectl device motion hinge-angle --device <UDID> --timeout 5
+```
+
+What the lit panel binds (framebuffer, digitizer, chrome, tap
 space, AX point size, rotation) is in
 [iPhone Duo](../iphone-duo/README.md).
 
@@ -148,5 +156,8 @@ system "xcrun", "clang", "-arch", arch, "-isysroot", sdk,
 
 - CoreDevice's `UniversalHIDService` is Swift-only with no swiftmodule
   anywhere — not callable from baguette.
+- A SpringBoard shim (swizzling `CMAngleManager` to feed fabricated
+  `CMAngle`s) worked too, but needed an injected dylib and a SpringBoard
+  restart; it is not shipped.
 - The legacy Indigo button press reaches the Duo's guest on a
   touchscreen service and is ignored (above).
