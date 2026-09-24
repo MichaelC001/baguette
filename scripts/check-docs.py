@@ -109,6 +109,20 @@ def check_changelog():
         report(path, f"holds minors {', '.join(minors)}; run scripts/changelog-rollover.py")
 
 
+def anchors(path):
+    """GitHub's heading slugs: lowercase, punctuation dropped, spaces → `-`, repeats get `-1`, `-2`…"""
+    seen, slugs = {}, set()
+    for _, line in lines_outside_fences(path.read_text()):
+        m = re.match(r"^#{1,6}\s+(.*?)\s*#*\s*$", line)
+        if not m:
+            continue
+        slug = re.sub(r"[^\w\- ]", "", m.group(1).lower()).replace(" ", "-")
+        count = seen.get(slug, 0)
+        seen[slug] = count + 1
+        slugs.add(slug if count == 0 else f"{slug}-{count}")
+    return slugs
+
+
 def check_links():
     files = {p for pattern in SCANNED for p in ROOT.glob(pattern)}
     for path in sorted(files):
@@ -119,9 +133,12 @@ def check_links():
             for target in LINK.findall(line):
                 if re.match(r"^(https?:|mailto:|#)", target):
                     continue
-                target = target.split("#")[0]
-                if not (path.parent / target).exists():
+                target, _, anchor = target.partition("#")
+                dest = (path.parent / target) if target else path
+                if not dest.exists():
                     report(path, f"line {n}: broken link {target}")
+                elif anchor and dest.suffix == ".md" and anchor not in anchors(dest):
+                    report(path, f"line {n}: no heading for #{anchor} in {dest.resolve().relative_to(ROOT)}")
 
 
 def main():

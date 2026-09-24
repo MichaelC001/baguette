@@ -1,24 +1,30 @@
+---
+description: Send keystrokes and typed US-ASCII text to the simulator from the CLI, the input wire, or the host Mac keyboard on the serve page. Use when filling text fields, pressing Return / arrows / shortcuts, or scripting keyboard input.
+---
+
 # Keyboard
 
-Send keystrokes from the host Mac keyboard into the simulator, plus
-explicit `key` / `type` verbs on the wire and CLI for scripting. Three
-entry points share the same dispatch:
+Send keystrokes into the simulator: `baguette key` for one key (with
+modifiers), `baguette type` for a string, the same `key` / `type`
+messages on the wire, and — on the `serve` page — the host Mac keyboard
+whenever the device screen has focus. Every flag:
+[commands.md#baguette-key](../../commands.md#baguette-key) ·
+[commands.md#baguette-type](../../commands.md#baguette-type).
 
-- `baguette key --code <KeyA…> [--modifiers shift,command] [--duration <s>]` — single keystroke.
-- `baguette type --text "<string>"` — typed as a sequence of keystrokes.
-- Wire JSON `{ "type": "key", "code": "KeyA", "modifiers": ["shift"] }` and
-  `{ "type": "type", "text": "hello" }` on `baguette serve`'s WebSocket and
-  `baguette input`'s stdin.
-- Browser — when the device's screen surface has focus, every supported
-  Mac keystroke is forwarded automatically.
+The side buttons (volume / power / action) are
+[Buttons](../buttons/README.md).
 
-This doc explains the wire surface, where the (page, usage) numbers
-come from, and how the browser's focus-gated capture works. If you're
-looking for the side buttons (volume / power / action), that's
-[`buttons.md`](../buttons/README.md) — same SimulatorKit symbol family
-(`IndigoHIDMessageForHIDArbitrary`), different HID page.
+## Quick start
 
-## Supported surface (phase 1)
+```bash
+baguette key  --udid <UDID> --code Enter
+baguette key  --udid <UDID> --code KeyA --modifiers shift,command
+baguette type --udid <UDID> --text "Hello, world!"
+```
+
+On the `serve` page, click the device screen and type.
+
+## Supported keys
 
 | Class               | Codes                                         |
 |---------------------|-----------------------------------------------|
@@ -30,24 +36,19 @@ looking for the side buttons (volume / power / action), that's
 | Punctuation (US)    | `Minus`, `Equal`, `BracketLeft`, `BracketRight`, `Backslash`, `Semicolon`, `Quote`, `Backquote`, `Comma`, `Period`, `Slash` |
 | Modifiers           | `shift`, `control`, `option`, `command`        |
 
-Codes are W3C `KeyboardEvent.code` strings so the browser can forward
-events verbatim — no translation table on the JS side.
+Codes are W3C `KeyboardEvent.code` strings, so the browser forwards
+events verbatim. F-keys, Page Up/Down and Home/End aren't supported;
+they pass through to the host browser instead.
 
-**Out of scope (phase 2):** IME / Pinyin / dead keys / emoji / non-Latin
-scripts. Those need `IndigoHIDMessageForKeyboardNSEvent`, the 9-arg
-MainActor cousin of the mouse symbol and unverified on iOS 26. F-keys,
-Page Up/Down, and Home/End are also not in phase 1; they pass through
-the host browser instead.
+## Wire (`baguette input` / stream WebSocket)
 
-## Wire JSON
-
-### Single keystroke
+Envelope framing and acks: [wire.md](../../wire.md).
 
 ```json
 { "type": "key", "code": "KeyA", "modifiers": ["shift", "command"], "duration": 0 }
 ```
 
-- `code` — required. One of the codes in the table above.
+- `code` — required. One of the codes above.
 - `modifiers` — optional array of `shift | control | option | command`.
   Held around the keystroke (modifier-down → key-down → key-up →
   modifier-up). Order is normalised; duplicates are deduped.
@@ -57,121 +58,50 @@ the host browser instead.
 Unknown codes / modifiers fail the parse with a clear `expected:` hint
 rather than silently dropping the press.
 
-### Typed text
-
 ```json
 { "type": "type", "text": "Hello, world!" }
 ```
 
-- `text` — required. ASCII-printable on a US layout. Each character is
-  decomposed into its `(KeyboardKey, modifiers)` pair at parse time
-  (`'A'` → `(KeyA, [shift])`, `'!'` → `(Digit1, [shift])`, …) and
-  dispatched in order at execute. Unsupported characters (non-ASCII,
+- `text` — required. ASCII-printable on a US layout; each character
+  becomes its key plus modifiers (`'A'` → `KeyA` + shift, `'!'` →
+  `Digit1` + shift), sent in order. Unsupported characters (non-ASCII,
   emoji, control characters) fail the parse — the alternative is
   silent data loss midway through a string, which is worse.
 
-## Dispatch — one path
+## Browser capture
 
-Both `Key` and `TypeText` route through `Input.key(_:modifiers:duration:)`
-→ `IndigoHIDInput.key`, which uses the same
-`IndigoHIDMessageForHIDArbitrary(target, page, usage, operation)`
-recipe as the bezel buttons. iOS 26 signature:
+The page's capture is **focus-gated**: while the device screen has
+focus, every supported keystroke is forwarded as a `key` message and
+kept from the browser, so host shortcuts (Cmd+R reload, Cmd+T new tab,
+…) go to iOS instead. Clicking the screen takes focus, so the gate
+opens as soon as you start interacting with iOS; when focus moves
+elsewhere, host shortcuts work normally. Works in focus mode and on a
+focused farm tile.
 
-```c
-IndigoHIDMessage* IndigoHIDMessageForHIDArbitrary(
-    uint32_t target,    // 0x32 — touch digitizer
-    uint32_t page,      // 7 for keyboard / keypad
-    uint32_t usage,     // HID usage code (e.g. 0x04 = 'a')
-    uint32_t operation  // 1 down / 2 up
-);
-```
+- The paste chord (Cmd+V / Ctrl+V) is left to the browser so its
+  native `paste` event fires — the clipboard text then goes through the
+  sim's pasteboard ([Paste](../paste/README.md)).
+- Codes outside the supported set (F-keys, Page Up/Down, …) are left to
+  the browser — Cmd+Shift+I keeps opening DevTools, Cmd+L still focuses
+  the address bar.
 
-For a key with modifiers held, the adapter brackets the keystroke:
-```
-modifier-down (sorted) → key-down → hold(duration) → key-up → modifier-up (reversed)
-```
-Sorting modifiers by `rawValue` keeps the down/up order deterministic
-so logs / tests stay reproducible — iOS itself doesn't care which
-modifier fires first.
-
-## Where the (page, usage) numbers come from
-
-USB HID Usage Tables, page 7 (Keyboard / Keypad). The mapping is
-hardcoded in `KeyboardKey.from(wireCode:)` and
-`KeyboardKey.decompose(character:)`:
-
-- Letters: `KeyA` … `KeyZ` → `0x04` … `0x1D`
-- Digits: HID quirk — `Digit1` … `Digit9` = `0x1E` … `0x26`, `Digit0` = `0x27` (last)
-- Keypad: same last-place quirk — `Numpad1` … `Numpad9` = `0x59` … `0x61`,
-  `Numpad0` = `0x62`, `NumpadDecimal` = `0x63`; `NumpadDivide` = `0x54`,
-  `NumpadMultiply` = `0x55`, `NumpadSubtract` = `0x56`, `NumpadAdd` = `0x57`,
-  `NumpadEnter` = `0x58`, `NumpadEqual` = `0x67`. These are the keypad
-  section of page 7 — distinct usages from the top-row digits, so iOS
-  can tell a numpad `5` from a main-row `5`. `NumLock` is omitted (iOS
-  has no num-lock concept).
-- Specials: `Enter` = `0x28`, `Escape` = `0x29`, `Backspace` = `0x2A`,
-  `Tab` = `0x2B`, `Space` = `0x2C`
-- Arrows: `ArrowRight` = `0x4F`, `ArrowLeft` = `0x50`,
-  `ArrowDown` = `0x51`, `ArrowUp` = `0x52`
-- Modifiers: `Control` = `0xE0`, `Shift` = `0xE1`, `Option` = `0xE2`,
-  `Command` = `0xE3` (left-side variants — iOS doesn't distinguish
-  left/right at this surface)
-
-## Browser overlay — focus-gated capture
-
-`keyboard-capture.js` ships a single class:
-
-```js
-const cap = new KeyboardCapture({
-  target: surface.screenArea,           // focusable element
-  simInput: () => simInput,             // resolved lazily; survives session restarts
-});
-cap.start();   // bind keydown listener
-cap.stop();    // unbind on teardown
-```
-
-The capture is **focus-gated**: while `document.activeElement` is the
-device screen, every supported keystroke is forwarded as a `key`
-envelope and `event.preventDefault`'d so host shortcuts (Cmd+R reload,
-Cmd+T new tab, …) go to iOS instead of the browser. One carve-out:
-the paste chord (Cmd+V / Ctrl+V) is left to the browser so its native
-`paste` event fires — the clipboard text then rides a `paste`
-envelope through the sim's pasteboard ([`paste.md`](../paste/README.md)). When focus moves
-elsewhere, host shortcuts work normally. Mounted from both
-`sim-native.js` (focus mode) and `farm-tile.js` (focused farm tile);
-`mousedown` on the screen takes focus, so the gate opens automatically
-when the user starts interacting with iOS.
-
-Codes outside the supported set (F-keys, Page Up/Down, …) are dropped
-**without** `preventDefault` so the host browser keeps handling them
-— Cmd+Shift+I keeps opening DevTools, Cmd+L still focuses the
-address bar, etc.
-
-## Adding a new key
-
-1. If the W3C code isn't in `KeyboardKey.wireCodeMap`, add the entry
-   with its HID usage (`Domain/Input/Keyboard.swift`).
-2. If the corresponding ASCII character is typeable, add it to
-   `KeyboardKey.punctuationMap` (or extend the digits / letters
-   branches in `decompose`).
-3. Add the W3C code to `FORWARDED` in `keyboard-capture.js` so the
-   browser actually forwards it (otherwise it stays a host shortcut).
-4. Tests: extend `KeyboardKeyTests` (parse + decompose) and the
-   `Key` / `TypeText` suites in `KeyboardTests.swift`.
-
-## Known limits
+## Gotchas
 
 - **No IME.** Pinyin / Korean / Japanese candidates can't be entered
-  through the HID path. Phase 2 needs `KeyboardNSEvent` (MainActor +
-  9-arg, like the mouse) to read `NSEvent.thread-local` state.
+  through this path.
 - **No emoji or accented characters.** US layout only; `é` / `中` /
-  `🦄` are rejected by `decompose`. For arbitrary unicode use
-  `paste` — it rides the sim's pasteboard instead of keystrokes
-  ([`paste.md`](../paste/README.md)).
+  `🦄` are rejected. For arbitrary unicode use
+  [Paste](../paste/README.md) — it goes through the sim's pasteboard
+  instead of keystrokes.
 - **No key repeat from CLI.** `baguette key` emits one keystroke; for
   held-key behaviour use `--duration`. Browser key repeat works via
   the OS firing repeated `keydown` events — each becomes its own
-  press wire envelope.
+  press.
 - **No host-browser shortcut shadowing.** Cmd+W (close tab),
   Cmd+Shift+I (devtools), Cmd+L (address bar) can't be intercepted
   from a sandboxed page; they always go to the host browser.
+
+## See also
+
+- [design.md](design.md) — the HID dispatch recipe and where each usage number comes from
+- [Paste](../paste/README.md) · [Buttons](../buttons/README.md)

@@ -1,12 +1,15 @@
-# Baguette JS SDK
-
-The Baguette SDK is the **browser-side library** that exposes a domain-shaped, OCP/SRP-clean interface for driving a simulator. Replaces the page-level transaction scripts (`bezel-buttons.js`, `sim-input.js`, `sim-input-bridge.js`) with a thin composition root: consumer pages call `Baguette.use(...)` and `sim.mount(...)`; everything else is internal.
-
-This document captures the SDK shape, the `/simulators/<UDID>/definition.json` bootstrap endpoint that feeds it, and the path from "transaction script" to "rich domain model" that motivated the refactor.
-
+---
+description: The browser-side Baguette JS SDK — Baguette.use() and sim.mount() turn a simulator's definition.json into an interactive bezel, screen and buttons. Use when building a web page that drives a simulator served by baguette serve.
 ---
 
-## Public API — the entire surface
+# Baguette JS SDK
+
+The **browser-side library** behind every `baguette serve` page that drives a
+simulator. A consumer page calls `Baguette.use(...)` and `sim.mount(...)`;
+everything else — bezel, screen, buttons, pointer gestures, wire envelopes —
+is internal. It is served by [`baguette serve`](../../commands.md#baguette-serve).
+
+## Quick start — the entire public surface
 
 ```js
 import { Baguette } from '/baguette/baguette.js';   // or window.Baguette
@@ -33,13 +36,47 @@ sim.button('powerButton').press({ hold: 1.5 });    // by id
 sim.detach();
 ```
 
-That's the whole consumer surface. No wire envelopes. No JSON shapes. No DOM math. No `kind:` discriminators. Adding a new device family doesn't change one line of the page code that calls this.
+That's the whole consumer surface. No wire envelopes, no JSON shapes, no DOM
+math, no `kind:` discriminators. Adding a new device family doesn't change one
+line of the page code that calls this.
 
----
+**The SDK never opens its own WebSocket.** The page owns the transport
+lifecycle (it already needs the socket for frame streaming) and hands its
+`send(payload)` callback to `Baguette.use`. What `send` receives is the gesture
+wire documented in [wire.md](../../wire.md).
 
-## Wire bootstrap — `/simulators/<UDID>/definition.json`
+## How a page and the SDK talk
 
-The SDK's first call: a per-simulator description of which parts the simulator has, computed by Swift from the device's `chrome.json` plus identity.
+```
+Consumer page                Baguette SDK                       Baguette server
+─────────────────            ─────────────────                   ───────────────
+                                                                /simulators/<udid>/definition.json
+const sim = await    ──fetch──>                       ────GET───>     │
+  Baguette.use({...})                                                  │
+                              new Simulator(def, ...) <───JSON─────────┘
+                                creates parts:
+                                 • Screen
+                                 • Button × N
+                                 • Crown?, Keyboard?
+
+sim.mount(container) ──────── Bezel.mount renders                ws://.../stream
+                              Screen.bindDOM attaches            (page-owned WS)
+                              PointerInterpreter                        ▲
+                              Button.mount × N                          │
+                                                                        │
+user clicks power button ──── Button.press({hold: 1.5})                 │
+                                ↓                                       │
+                              transport.button(envelope, ...)           │
+                                ↓                                       │
+                              send({type:"button",button:"power", ──────┘
+                                    duration: 1.5})
+```
+
+## HTTP — `GET /simulators/<UDID>/definition.json`
+
+The SDK's first call: a per-simulator description of which parts the
+simulator has, computed by Swift from the device's `chrome.json` plus
+identity.
 
 ```json
 {
@@ -78,120 +115,22 @@ Optional fields arrive on devices that have them:
 - `"keyboard": { ... }` — software keyboard input
 - `"remote": { ... }` — Apple TV's Siri Remote (future)
 
-**No `kind:` tagged-union.** Parts are member fields. The JS SDK constructs a `Crown` part if `def.crown` is present, a `Keyboard` part if `def.keyboard` is present, otherwise skips. Watch's Digital Crown is its own class with `rotate()` + `click()` — never confused with a press button.
+**No `kind:` tagged union.** Parts are member fields: the SDK constructs a
+`Crown` part if `def.crown` is present, a `Keyboard` part if `def.keyboard` is
+present, otherwise skips. Watch's Digital Crown is its own class with
+`rotate()` + `click()` — never confused with a press button.
 
----
+## Gotchas
 
-## Module layout
+- **Apple Watch's crown and Apple TV's remote aren't there yet.** The crown
+  part and the remote part are planned; today's parts are bezel, screen,
+  buttons and keyboard.
+- **Pages that have their own canvas** (the farm tile) don't call
+  `Baguette.use`; they assemble the SDK's parts — transport, screen,
+  keyboard — by hand.
 
-```
-Resources/Web/baguette/
-├── baguette.js                 ← entry: Baguette.use(...) / Baguette.version
-├── transport.js                ← THE ONE file that knows the wire format
-├── simulator.js                ← facade. composes parts, owns lifecycle
-├── parts/
-│   ├── bezel.js                ← bezel image + screen-rect clip
-│   ├── screen.js               ← tap/swipe/touch verbs + frame canvas
-│   ├── button.js               ← one hardware button (mousedown→press)
-│   ├── crown.js                ← Apple Watch — rotate/click  (future)
-│   └── keyboard.js             ← type/key + codeMap          (future)
-└── gestures/
-    └── pointer-interpreter.js  ← DOM events → Screen domain methods
-```
+## See also
 
-### SRP — one class, one reason to change
-
-| Concern | File |
-|---|---|
-| Wire dialect | `transport.js` only |
-| Bezel rendering | `parts/bezel.js` only |
-| Pointer events → gestures | `gestures/pointer-interpreter.js` only |
-| Hardware button DOM + animation | `parts/button.js` only |
-| Composition lifecycle | `simulator.js` only |
-
-### OCP — extension without modification
-
-| Change | What touches |
-|---|---|
-| Add a new screen verb (e.g. `pinch`) | `parts/screen.js` |
-| New hardware button on iPhone | Data only — `compose(...)` projects it |
-| Apple Watch support | Add `parts/crown.js` + the Swift definition adds `crown` field |
-| Apple TV support | Add `parts/remote.js`; facade reads `def.remote`; Screen part not instantiated |
-| Page redesign | Consumer pages only — SDK untouched |
-
-Every column ends in *one* file.
-
----
-
-## How the layers talk
-
-```
-Consumer page                Baguette SDK                       Baguette server
-─────────────────            ─────────────────                   ───────────────
-                                                                /simulators/<udid>/definition.json
-const sim = await    ──fetch──>                       ────GET───>     │
-  Baguette.use({...})                                                  │
-                              new Simulator(def, ...) <───JSON─────────┘
-                                creates parts:
-                                 • Screen
-                                 • Button × N
-                                 • Crown?, Keyboard?
-
-sim.mount(container) ──────── Bezel.mount renders                ws://.../stream
-                              Screen.bindDOM attaches            (page-owned WS)
-                              PointerInterpreter                        ▲
-                              Button.mount × N                          │
-                                                                        │
-user clicks power button ──── Button.press({hold: 1.5})                 │
-                                ↓                                       │
-                              transport.button(envelope, ...)           │
-                                ↓                                       │
-                              send({type:"button",button:"power", ──────┘
-                                    duration: 1.5})
-```
-
-The SDK never opens its own WebSocket. The consumer page owns transport lifecycle (already needs the socket for frame streaming) and hands its `send(payload)` callback to `Baguette.use`. Cleanly separates transport from model — the SDK is socket-agnostic.
-
----
-
-## First-principle anchor
-
-A simulator stands in for a physical device. A physical device is composed of parts. Each part has behaviors. The user interacts with the parts. That's the whole domain — three nouns: **device**, **parts**, **behaviors**. Different devices have different parts. iPhone has `screen + buttons + keyboard`. Watch has `screen + buttons + crown + keyboard`. Apple TV has no screen-as-input-surface — it has a remote.
-
-The SDK mirrors that shape in both languages: the Swift `Simulator` has sub-aggregates; the JS `Simulator` has the same sub-objects. Wire envelopes are a remoting detail, not a domain concern.
-
----
-
-## Migration path
-
-1. **(landed)** SDK skeleton + `/definition.json` route + `/baguette-demo.html` smoke page.
-2. **(landed)** Button geometry + transform CSS computed in Swift (anchor switch + mirror formula + image-percent translates).
-3. **(landed)** Full gesture interpreter ported into `gestures/pointer-interpreter.js` — drag, pinch, pan, edge-stream, wheel-as-2-finger, Safari gesture events, option-hover preview, touch (iOS WebView).
-4. **(landed)** Keyboard part added (`parts/keyboard.js`). W3C-code whitelist consolidated in one file.
-5. **(landed)** Cutover of all three consumer pages: `sim-stream.js`, `sim-native.js` (with orientation-aware coord remap at the send boundary), `farm/farm-tile.js` (uses SDK parts à la carte — Transport + Screen + Keyboard — since the tile has its own canvas surface).
-6. **(landed)** Deleted: `bezel-buttons.js`, `sim-input.js`, `sim-input-bridge.js`, `device-frame.js`, `keyboard-capture.js`.
-7. **(next)** Add `parts/crown.js`. Apple Watch correctness lands (rotary input, not button).
-8. **(eventually)** Add `parts/remote.js` for Apple TV. Vision Pro adds whatever parts it needs.
-
-The cutover is complete — every browser-side simulator interaction flows through `Baguette.use({...}).mount(container)` (or, in farm-tile's case, through the SDK's internal parts assembled by hand).
-
----
-
-## Adding a new part type
-
-1. **Swift**: add the optional field to `SimulatorDefinition` (Domain/Simulator/SimulatorDefinition.swift).
-2. **Swift**: extend `SimulatorDefinition.compose(...)` to project the new part from `DeviceChromeAssets` (or wherever its data lives).
-3. **Swift**: add tests in `Tests/BaguetteTests/Simulator/SimulatorDefinitionTests.swift` (TDD per CLAUDE.md).
-4. **JS**: add `parts/<thing>.js` exporting a class with the part's domain verbs.
-5. **JS**: instantiate it in `simulator.js` when the field is present.
-6. **HTML**: include the new `<script>` in `sim.html` (and demo page).
-
-Consumer pages, transport, and other parts don't change.
-
----
-
-## Why this isn't a "data-driven UI"
-
-Earlier proposals shipped a tagged-union "scene with controls[]" and had a `Mounts[cap.kind]` registry on the JS side that interpreted the data. That was the **transaction script smell at a different layer** — frontend still had to know "a `buttons` capability becomes `<button>` overlays, a `crown` capability becomes a wheel listener."
-
-The current SDK doesn't have a `kind:` switch anywhere. Parts are member fields; the Simulator constructor instantiates a part class iff the field is present; each part class owns its rendering AND its wire dispatch. The view layer asks parts to render themselves; nobody interprets a config. **That's why the SDK boundary holds across new device families.**
+- [design.md](design.md) — the device / parts / behaviours model and why it isn't data-driven UI
+- [chrome-bezel](../chrome-bezel/README.md) — where the bezel and button images come from
+- [wire.md](../../wire.md) — the envelopes `send` receives

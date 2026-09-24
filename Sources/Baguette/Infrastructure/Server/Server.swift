@@ -2150,7 +2150,7 @@ struct Server: Sendable {
         /// full quality is what keeps that intermediate from showing
         /// up as ringing in something the extension promises is
         /// lossless. It is still not bit-exact — see
-        /// `docs/features/screenshot/README.md`.
+        /// `docs/features/screenshot/design.md`.
         var defaultQuality: Double {
             switch self {
             case .jpeg: return 0.85
