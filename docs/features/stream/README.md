@@ -55,8 +55,7 @@ seed (`0x04`).
 
 ## Gotchas
 
-- `--help` lists `h264` as a format, but only `mjpeg` and `avcc` are
-  accepted; anything else exits with `Unknown format`.
+- Any `--format` other than `mjpeg` or `avcc` exits with `Unknown format`.
 - The AVCC framing is baguette's own, not a raw H.264 elementary stream, so
   generic players (`ffplay`, VLC) can't read it directly. Strip the length and
   tag, or use the `serve` page.

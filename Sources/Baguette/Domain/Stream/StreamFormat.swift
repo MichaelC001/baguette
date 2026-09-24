@@ -2,7 +2,7 @@ import Foundation
 
 /// The wire format the user picks for a frame stream. Drives the codec
 /// choice and the byte envelope downstream consumers parse.
-enum StreamFormat: String, Sendable, Equatable {
+enum StreamFormat: String, Sendable, Equatable, CaseIterable {
     /// Stateless JPEG-per-frame inside a multipart HTTP envelope. Easy for
     /// browsers; high bandwidth.
     case mjpeg

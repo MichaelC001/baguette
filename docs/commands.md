@@ -75,7 +75,7 @@ baguette input --udid <udid> [--display <display>]
 
 ## baguette stream
 
-Stream framebuffer to stdout (mjpeg / h264 / avcc). Reads runtime config commands from stdin.
+Stream framebuffer to stdout (mjpeg / avcc). Reads runtime config commands from stdin.
 
 ```
 baguette stream --udid <udid> [--format <format>] [--fps <fps>] [--quality <quality>] [--bitrate <bitrate>] [--scale <scale>]
@@ -84,7 +84,7 @@ baguette stream --udid <udid> [--format <format>] [--fps <fps>] [--quality <qual
 | Flag | Required | Default | Description |
 |---|---|---|---|
 | `--udid` | yes |  | Simulator UDID |
-| `--format` |  | `mjpeg` | Output format: mjpeg \| h264 \| avcc |
+| `--format` |  | `mjpeg` | Output format: mjpeg \| avcc |
 | `--fps` |  | `60` | Frames per second |
 | `--quality` |  | `0.7` | JPEG quality (0.0 – 1.0) |
 | `--bitrate` |  | `8000000` | H.264 average bitrate (bps) |
@@ -400,8 +400,8 @@ baguette logs --udid <udid> [--level <level>] [--style <style>] [--predicate <pr
 | Flag | Required | Default | Description |
 |---|---|---|---|
 | `--udid` | yes |  | Simulator UDID |
-| `--level` |  | `info` | Minimum log level: debug \| info \| notice \| error \| fault |
-| `--style` |  | `default` | Output style: default \| compact \| json \| syslog |
+| `--level` |  | `info` | Minimum log level: default \| info \| debug |
+| `--style` |  | `default` | Output style: default \| compact \| json \| syslog \| ndjson |
 | `--predicate` |  |  | NSPredicate string passed to `log stream --predicate` verbatim |
 | `--bundle-id` |  |  | Convenience: filter to a specific process by bundle / image name. ANDs with --predicate when both given. |
 
