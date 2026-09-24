@@ -19,7 +19,7 @@ enum ScreenSnapshot {
     ///
     /// `scale ≥ 2` routes through `VideoFrameScaler` so the encoded bytes
     /// are smaller; `size` / `fit` / `background` are the shared
-    /// capture-size vocabulary (see `docs/features/capture-size.md`), and
+    /// capture-size vocabulary (see `docs/features/capture-size/README.md`), and
     /// every one of them defaults to "exactly what the framebuffer gave
     /// us" so the historical call sites keep their historical bytes.
     static func capture(

@@ -14,7 +14,7 @@ import Foundation
 /// iOS 27 runtime then never manages to reconnect them — it re-adds a
 /// dead `IOHIDServiceRef` on the first Indigo event and believes it
 /// succeeded — so taps report `ok` and land nowhere, and hardware buttons
-/// are gone for good. See `docs/features/device-hub.md` and issue #77.
+/// are gone for good. See `docs/features/device-hub/README.md` and issue #77.
 ///
 /// The notify state is the whole detection: it is cheap to read from the
 /// host (`simctl spawn <udid> notifyutil -g …`), and `1` means the surface

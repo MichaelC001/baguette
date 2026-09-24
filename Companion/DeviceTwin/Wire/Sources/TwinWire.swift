@@ -2,7 +2,7 @@ import Foundation
 
 /// The twin envelope, phone side — must mirror the host's
 /// `TwinEnvelope` / `AVCCEnvelope` exactly (see
-/// `docs/features/device-twin.md`). Text frames are JSON lines;
+/// `docs/features/device-twin/README.md`). Text frames are JSON lines;
 /// binary frames are `[4-byte big-endian length][tag][payload]`
 /// chunks, the same framing baguette's AVCC streams use.
 public enum TwinWire {

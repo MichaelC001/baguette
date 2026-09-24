@@ -6,7 +6,7 @@ import Foundation
 /// argv tail handed to `xcrun simctl status_bar <udid> override …`.
 /// The flag spellings here are the contract with simctl; they were
 /// verified against `xcrun simctl status_bar … override` help output
-/// (see `docs/features/status-bar.md`).
+/// (see `docs/features/status-bar/README.md`).
 @Suite("StatusBarOverride")
 struct StatusBarOverrideTests {
 

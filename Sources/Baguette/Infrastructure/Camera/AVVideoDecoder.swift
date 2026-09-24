@@ -11,7 +11,7 @@ import CoreVideo
 ///
 /// Rotation metadata (`preferredTransform`) is not applied to the
 /// pixels — a video recorded in a rotated sensor orientation streams in
-/// its encoded orientation. See `docs/features/camera.md` known limits.
+/// its encoded orientation. See `docs/features/camera/README.md` known limits.
 ///
 /// All mutable state is behind sync accessors so the async `start` /
 /// `rewind` never touch the lock in an async context.

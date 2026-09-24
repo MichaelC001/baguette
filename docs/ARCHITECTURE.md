@@ -60,7 +60,7 @@ per-session warmup that should only happen once.
 > editor or agent host driving it over stdin. That's the opposite
 > direction from a **baguette plugin**, which baguette spawns and which
 > calls *back* into a running `serve` over HTTP. Same word, opposite
-> arrow; see [`features/plugins.md`](features/plugins.md) for the
+> arrow; see [`features/plugins/README.md`](features/plugins/README.md) for the
 > second one.
 
 ## Three-layer code split
@@ -420,7 +420,7 @@ code. The `Tests` scheme runs in a few seconds without a booted sim.
 
 - [`../README.md`](../README.md) — quickstart, CLI reference, wire
   protocol.
-- [`features/plugins.md`](features/plugins.md) — the plugin contract:
+- [`features/plugins/README.md`](features/plugins/README.md) — the plugin contract:
   manifest schema, the command's JSON answer, the capability table and
   what it does and doesn't guarantee, bakery distribution.
 - `../Sources/Baguette/Infrastructure/Input/IndigoHIDInput.swift` —

@@ -46,7 +46,7 @@ and calls the already-warm server. Re-spawning the `baguette` binary
 costs ~1.2 s in framework resolution alone.
 
 **Answer in one JSON object on stdout.** `{"ok":true,"rows":[…]}` — see
-[`docs/features/plugins.md`](../../docs/features/plugins.md) for the row
+[`docs/features/plugins/README.md`](../../docs/features/plugins/README.md) for the row
 shape. Printing anything else is an error, deliberately: a panel that
 renders nothing would read as "all clear".
 

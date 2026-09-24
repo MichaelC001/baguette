@@ -173,8 +173,8 @@ Indigo path. `app-switcher`, `swipe-to-app-switcher`, `swipe-to-home`,
 are *virtual* buttons — no physical counterpart, but they're useful
 when the agent wants the gesture vocabulary without managing a
 streaming touch chain manually. See
-[`docs/features/buttons.md`](../../../docs/features/buttons.md) and
-[`docs/features/touches.md`](../../../docs/features/touches.md) for
+[`docs/features/buttons/README.md`](../../../docs/features/buttons/README.md) and
+[`docs/features/touches/README.md`](../../../docs/features/touches/README.md) for
 the dispatch path.
 
 ### Keyboard — `key` / `type`
@@ -196,7 +196,7 @@ Supported codes: `KeyA`–`KeyZ`, `Digit0`–`Digit9`, `Enter`, `Escape`,
 `option`, `command` (comma-separated on the CLI). Phase-1 limits:
 **no IME, no emoji, no accented characters** — those need
 `KeyboardNSEvent` (phase 2). See
-[`docs/features/keyboard.md`](../../../docs/features/keyboard.md).
+[`docs/features/keyboard/README.md`](../../../docs/features/keyboard/README.md).
 
 ## Streaming gestures — `input`
 
@@ -308,7 +308,7 @@ POST http://localhost:8421/simulators/<UDID>/files?name=<filename>
 The browser focus page (`/simulators/<UDID>`) accepts drag-and-drop onto
 the device, posting to this route — a dropped folder-form `.app` is
 packed into a stored zip in-page and posted as `<Name>.app.zip`. See
-`docs/features/file-upload.md`.
+`docs/features/file-upload/README.md`.
 
 **Limits:** in a `.zip` the `.app` must sit at the top level (for ipa
 `Payload/` layout, drop the `.ipa` itself); the CLI takes a real `.app`
@@ -343,7 +343,7 @@ usage error, caught before simctl runs.
 
 Useful for accessibility work: flip to dark / contrast on / an
 accessibility text size, then re-run `describe-ui` and compare. See
-[`docs/features/interface.md`](../../../docs/features/interface.md).
+[`docs/features/interface/README.md`](../../../docs/features/interface/README.md).
 
 ## Shake — `shake`
 
@@ -354,7 +354,7 @@ baguette shake --udid <UDID>   # UIKit motionShake on the frontmost app → simc
 Device action (not a gesture): the frontmost responder gets
 `motionBegan/Ended` with `UIEventSubtypeMotionShake`. iOS-only. Also on
 `serve` as `POST /simulators/<UDID>/shake`. See
-[`docs/features/shake.md`](../../../docs/features/shake.md).
+[`docs/features/shake/README.md`](../../../docs/features/shake/README.md).
 
 ## Simulated GPS location — `location`
 
@@ -387,7 +387,7 @@ magnetometer compass) is **unavailable in the simulator at all**, and
 `course` is derived on a flat lat/lon grid so **diagonal** bearings come
 back skewed by `1/cos(latitude)` (~6.5° at lat 37, ~18° at lat 60);
 cardinal bearings are exact everywhere. See
-[`docs/features/location.md`](../../../docs/features/location.md).
+[`docs/features/location/README.md`](../../../docs/features/location/README.md).
 
 Position and waypoints are `lat,lon` **tokens** (not `--lat` / `--lon`
 flags) so a leading `-` in a western/southern coordinate isn't read as an
@@ -414,7 +414,7 @@ with a Leaflet map — click to set a pin, or Route mode for waypoints. It
 also has a place-name search (OSM Nominatim) and a "locate me" button
 (the Mac's GPS). Note: `simctl location` has no read-back, so there's no
 `GET …/location` and no way to query the device's current position. See
-`docs/features/location.md`.
+`docs/features/location/README.md`.
 
 ## CoreMotion — `motion`
 
@@ -464,7 +464,7 @@ classifies by its speed, and a bare point (or `DELETE …/location`) parks
 it stationary. Motion is opt-in — a location request never arms it. In the
 browser, that's the **Drive motion sensors** toggle on the Location card.
 Floor counting and the magnetometer stay unavailable on purpose. See
-`docs/features/motion.md`.
+`docs/features/motion/README.md`.
 
 ## Network conditioning — `network`
 
@@ -532,7 +532,7 @@ content beside them is not. For an app whose realtime layer uses a
 offline. Loss is request-level (a proportion of requests
 fail immediately), not packet-level. A debug React Native build has its JS
 bundle download conditioned too, so arm something mild, let the app load,
-then change the condition live. See `docs/features/network.md`.
+then change the condition live. See `docs/features/network/README.md`.
 
 ## Accessibility tree — `describe-ui`
 

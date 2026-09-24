@@ -19,7 +19,7 @@ Every other rule here follows from that goal. Each fact has exactly one home, so
 |---|---|---|
 | `README.md` | 972 lines | CLI reference (~150 lines), wire protocol (~110), source layout (~190), testing and "why this works" repeat `docs/features/*`, `docs/ARCHITECTURE.md`, the skill's references and the source tree |
 | `CHANGELOG.md` | 1,295 lines, 43 releases | Bullets average ~830 chars (longest 3,634); 108 of 130 are over 300. They name internal types, private symbols and file paths, which repeats the PR |
-| `docs/features/*.md` | 33 files, ~9.8k lines | 18 are over 200 lines. Usage, wire JSON, dispatch paths and reverse-engineering notes share one file, so users wade through HID constants and contributors can't find the research |
+| `docs/features/*.md` | 32 files, ~9.4k lines | 18 are over 200 lines. Usage, wire JSON, dispatch paths and reverse-engineering notes share one file, so users wade through HID constants and contributors can't find the research |
 | `CLAUDE.md` | 133 lines, loaded every session | Line count hides the size: each "Known iOS 26 limits" bullet is a full write-up (the HID-target one is ~2,000 chars) that also lives, in longer form, in its feature doc |
 | `skills/baguette/references/` | `cli.md`, `wire-protocol.md` | Hand-copied from the README; a flag change means three edits |
 | Links | 0 broken | Nothing checks them, so that's luck |
@@ -208,12 +208,12 @@ When a doc goes over budget, split it. Don't raise the limit.
 
 ## Migration
 
-Each step is its own PR, and the docs stay valid after each one.
+Each step is its own commit in one PR, and the docs stay valid after each one.
 
 1. **Hygiene**: this design; split `CHANGELOG.md` into 0.2.x + `docs/changelog/0.1.md`; changelog rollover in the release workflow; `scripts/check-docs.py` in report-only mode.
 2. **Generation**: `make docs` builds `docs/commands.md` and `docs/README.md`.
-3. **Tier 1**: slim README; add `CONTRIBUTING.md`, `docs/wire.md`, `docs/serve.md`.
-4. **Move**: `git mv docs/features/<x>.md docs/features/<x>/README.md` for all 33 features; a script rewrites links (including the skills and CLAUDE.md) and `check-docs.py` proves none broke. Mechanical, no content changes.
+3. **Move**: `git mv docs/features/<x>.md docs/features/<x>/README.md` for all 32 features; a script rewrites links (including the skills, CLAUDE.md and source comments) and `check-docs.py` proves none broke. Mechanical, no content changes. Done before tier 1 so the new README links to final paths.
+4. **Tier 1**: slim README; add `CONTRIBUTING.md`, `docs/wire.md`, `docs/serve.md`.
 5. **Split**: per feature, add `description`, move research sections into `design.md`, keep usage + gotchas in `README.md`, delete file maps and flag tables. Parallelisable per feature.
 6. **CLAUDE.md + skills**: limits to one line each; checklists into `baguette-implement-feature`; `skills/baguette/references/` link instead of copy.
 7. **Enforce**: turn `check-docs.py --strict` on in CI.

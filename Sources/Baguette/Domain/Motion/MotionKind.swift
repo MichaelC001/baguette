@@ -9,7 +9,7 @@ import Foundation
 /// The simulator has no motion coprocessor, so nothing classifies motion
 /// for us: `CMMotionActivityManager.isActivityAvailable()` is `false` and
 /// locationd refuses the subscription outright (see
-/// `docs/features/motion.md`). baguette supplies the classification
+/// `docs/features/motion/README.md`). baguette supplies the classification
 /// itself, and the only honest input it has is the speed the device is
 /// being driven at by a walk or a route.
 ///

@@ -61,12 +61,12 @@ https://github.com/user-attachments/assets/65dc62ee-f0c7-48fb-9c57-5bd267c8c02f
   [`asc-pro/SimCam`](https://github.com/tddworks/asc-pro))
   loaded into every sim-launched app via `DYLD_INSERT_LIBRARIES`;
   baguette pumps BGRA frames through a shared-memory ring buffer.
-  See [`docs/features/camera.md`](docs/features/camera.md).
+  See [`docs/features/camera/README.md`](docs/features/camera/README.md).
 - **iPhone Duo's hinge** — `baguette hinge --udid <X> --pose open`
   folds and unfolds Xcode 27.1's foldable the way Device Hub's picker
   does, from the CLI, `POST /simulators/<udid>/hinge`, or the pose
   picker under the 3D book the page draws for it. See
-  [`docs/features/hinge.md`](docs/features/hinge.md).
+  [`docs/features/hinge/README.md`](docs/features/hinge/README.md).
 - **Device orientation** — `baguette orientation --udid <X> portrait`
   rotates a booted simulator. Wire JSON + a one-click rotate button
   on the focus-mode toolbar. Fires a `GSEventTypeDeviceOrientationChanged`
@@ -220,7 +220,7 @@ baguette <command> [options]
 
   # Frames, screenshots + video. --size speaks one shared vocabulary
   # (presets like appstore-6.9 / square / 16:9, plus WIDTHxHEIGHT and
-  # W:H) — see docs/features/capture-size.md. NB render-3d's --fit
+  # W:H) — see docs/features/capture-size/README.md. NB render-3d's --fit
   # places the screenshot on the device MESH, not on the canvas.
   stream     --udid <UDID> [--fps 60] [--format mjpeg|avcc]
                                              Stream frames on stdout
@@ -259,7 +259,7 @@ baguette <command> [options]
 
   # Deep links. `https://` dispatches fine and then opens SAFARI rather
   # than your app — the simulator doesn't resolve associated domains — so
-  # openurl warns before doing it. See docs/features/deep-links.md.
+  # openurl warns before doing it. See docs/features/deep-links/README.md.
   openurl --udid <UDID> <url>                Open a deep link, e.g.
                                              'myapp://profile/42'
   schemes --udid <UDID> [--json]             URL schemes the device's apps
@@ -278,7 +278,7 @@ baguette <command> [options]
 
   # Plugins — domain-specific affordances that run as subprocesses.
   # Nothing runs at install time; a plugin's command runs when you
-  # activate it. See docs/features/plugins.md.
+  # activate it. See docs/features/plugins/README.md.
   plugin list                                Installed plugins + provenance
   plugin show <name>                         Detail, including the capabilities
                                              it may use — read before installing
@@ -362,7 +362,7 @@ gives you the whole phone centred in a square, not a square cut out of
 the middle. Unknown sizes are rejected, never approximated.
 
 Full details, including why the ratio maths works that way, in
-[`docs/features/capture-size.md`](docs/features/capture-size.md).
+[`docs/features/capture-size/README.md`](docs/features/capture-size/README.md).
 
 ## `baguette serve` — the web UI
 
@@ -425,8 +425,8 @@ rejected.
 | `POST` | `/simulators/:udid/input`                  | one gesture envelope — same JSON `baguette input` takes |
 | `POST` | `/simulators/:udid/openurl?url=…`          | open a deep link; answers where it went (`app` / `browser` + warning) |
 | `GET`  | `/simulators/:udid/schemes.json?q=`        | URL schemes the device's apps registered, ranked |
-| `POST` `GET` `DELETE` | `/simulators/:udid/motion`      | injected CoreMotion — activity, pedometer, device motion ([docs](docs/features/motion.md)) |
-| `POST` `GET` `DELETE` | `/simulators/:udid/network`     | injected network conditioning — latency, downlink bandwidth, request loss, offline ([docs](docs/features/network.md)) |
+| `POST` `GET` `DELETE` | `/simulators/:udid/motion`      | injected CoreMotion — activity, pedometer, device motion ([docs](docs/features/motion/README.md)) |
+| `POST` `GET` `DELETE` | `/simulators/:udid/network`     | injected network conditioning — latency, downlink bandwidth, request loss, offline ([docs](docs/features/network/README.md)) |
 | `GET`  | `/plugins.json`                            | installed plugin manifests   |
 | `POST` | `/plugins/:id/commands/:cmd?udid=`         | run one plugin contribution, answer its rows |
 | `GET`  | `/bakeries.json`                           | trusted bakeries + pinned commits + which plugins you already have |
@@ -523,7 +523,7 @@ baguette serve --plugin-dir ./my-plugins        # local authoring, nothing insta
 baguette's own repo is the **official bakery**. Only `a11y` ships inside
 the binary, so a fresh install has something in the rail; everything
 else it maintains — starting with
-[`deeplink`](docs/features/deep-links.md) — is official and still
+[`deeplink`](docs/features/deep-links/README.md) — is official and still
 something you choose to install.
 
 Two properties define the security model:
@@ -551,7 +551,7 @@ at the foot of the rail previews and installs a bakery without leaving
 the page.
 
 Full contract — manifest schema, the command's JSON answer, capability
-table, bakery layout — in [`docs/features/plugins.md`](docs/features/plugins.md).
+table, bakery layout — in [`docs/features/plugins/README.md`](docs/features/plugins/README.md).
 A worked two-plugin bakery lives in [`examples/expo-bakery/`](examples/expo-bakery/).
 
 ## Wire protocol — `baguette input`
@@ -636,7 +636,7 @@ Server pushes `{"type":"camera_devices","devices":[…]}` once on
 connect and again on `camera_list`, plus `{"type":"camera_state",
 "phase":"idle|streaming","fps":29.97,"device":"…"}` on every
 state change and once per second while streaming. Full wire
-reference: [`docs/features/camera.md`](docs/features/camera.md).
+reference: [`docs/features/camera/README.md`](docs/features/camera/README.md).
 
 **Coordinate convention.** All `x` / `y` / `startX` / `endX` / `x1` / `x2`
 are in **device points** — same units as `width` and `height`. The HID
@@ -653,7 +653,7 @@ coordinates by `width` / `height` before serialising.
   die. `baguette boot` heals this automatically; for a device booted
   some other way, or one Device Hub was opened on later, run
   `baguette heal --udid <UDID>` (restarts SpringBoard, ~4 s). See
-  [`docs/features/device-hub.md`](docs/features/device-hub.md).
+  [`docs/features/device-hub/README.md`](docs/features/device-hub/README.md).
 - `siri` button — crashes `backboardd` via every known Indigo path;
   refused by the CLI.
 - `key` / `type` cover US-ASCII via W3C `KeyboardEvent.code` strings.

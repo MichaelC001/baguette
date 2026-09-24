@@ -13,7 +13,7 @@ import Foundation
 /// Note this is a direction of *travel*, not a magnetometer reading. The
 /// simulator has no magnetometer at all (`CLLocationManager
 /// .headingAvailable()` is `false` there), so `CLHeading` can't be driven
-/// by any of this — see `docs/features/location.md`.
+/// by any of this — see `docs/features/location/README.md`.
 public struct Bearing: Equatable, Sendable {
     /// Degrees clockwise from north, always in [0, 360).
     public let degrees: Double

@@ -46,7 +46,7 @@ one WS); separate processes spend too long in startup for the
 recognizer to aggregate. A known-good cadence is ~80 ms hold per
 tap and ~50 ms gap between taps. For a one-shot CLI shape with the
 same recipe baked in, use `baguette double-tap` — see
-[`docs/features/double-tap.md`](../../../docs/features/double-tap.md).
+[`docs/features/double-tap/README.md`](../../../docs/features/double-tap/README.md).
 
 ## Swipe (one-shot, server interpolates)
 
@@ -90,7 +90,7 @@ event in the chain is flagged as an `IndigoHIDEdge` system gesture.
 swipe → Home, slow drag-and-hold near midpoint → App Switcher,
 with iOS animating the live preview as the events stream. Omit
 `edge` for ordinary interior touches. See
-[`docs/features/touches.md`](../../../docs/features/touches.md) for
+[`docs/features/touches/README.md`](../../../docs/features/touches/README.md) for
 the full dispatch recipe.
 
 ### Two fingers (the primary pinch / pan path)
@@ -350,7 +350,7 @@ POST /simulators/<UDID>/shake
 ```
 
 Response: `{"ok":true}`; `404` unknown udid; `500 shake failed (simctl
-error)`. iOS-only. See [`docs/features/shake.md`](../../../docs/features/shake.md).
+error)`. iOS-only. See [`docs/features/shake/README.md`](../../../docs/features/shake/README.md).
 
 ## Motion HTTP routes
 
@@ -394,7 +394,7 @@ build carries no `VirtualMotion.dylib`.
 time. Once armed, `POST …/location` drives the activity from the speed it
 carries (walk vector, route `speed`, or a bare point → stationary); a
 location request never arms motion on its own. See
-[`docs/features/motion.md`](../../../docs/features/motion.md).
+[`docs/features/motion/README.md`](../../../docs/features/motion/README.md).
 
 ## 3D render HTTP routes
 
@@ -444,7 +444,7 @@ Server → client, sent once on connect and again after every
 screen mesh lands for the active camera pose. Interact-mode gestures
 originating from the browser use this to map a canvas click onto the
 correct simulator device point at any rotation, not just Front. See
-[`docs/features/3d-rendering.md`](../../../docs/features/3d-rendering.md).
+[`docs/features/3d-rendering/README.md`](../../../docs/features/3d-rendering/README.md).
 
 ## Logs WebSocket — `WS /simulators/<UDID>/logs`
 
@@ -518,7 +518,7 @@ webcam. `fit` is one of `"fit"` (letterbox) | `"fill"` (cover with
 center-crop). The browser exposes this as the "Camera" card under
 `/simulators/<UDID>`'s sidebar. iOS apps launched *before* arming
 won't see frames — relaunch them. See
-[`docs/features/camera.md`](../../../docs/features/camera.md) for
+[`docs/features/camera/README.md`](../../../docs/features/camera/README.md) for
 the full pipeline.
 
 ## Debugging a "tap missed"
@@ -551,7 +551,7 @@ device today:
   `force_idr` / `snapshot`; gestures answer
   `{"ok":false,"error":"device control is not wired yet"}`.
 
-See `docs/features/device-twin.md` for the full design.
+See `docs/features/device-twin/README.md` for the full design.
 
 Since then the device tree has grown a unified page and 3D stage:
 `GET /devices/<UDID>` serves the same UI as a simulator (view-only),

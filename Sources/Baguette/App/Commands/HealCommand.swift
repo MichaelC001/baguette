@@ -12,7 +12,7 @@ import Foundation
 /// SpringBoard restarts with it: running apps are killed, the device is
 /// not rebooted. `baguette boot` does the same automatically; this is
 /// for a device booted some other way, or one Device Hub was opened on
-/// later. See `docs/features/device-hub.md`.
+/// later. See `docs/features/device-hub/README.md`.
 struct HealCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "heal",

@@ -13,7 +13,7 @@ import Mockable
 /// simulator means degrading the whole Mac, every other simulator included.
 /// Injecting into the app under test is the only way to scope it, so the
 /// production impl is `SharedFileNetwork` (Infrastructure); see
-/// `docs/features/network.md`.
+/// `docs/features/network/README.md`.
 @Mockable
 protocol Network: AnyObject, Sendable {
     /// State how degraded the network is, and arm the dylib so apps

@@ -8,7 +8,7 @@ import Foundation
 /// Size / fit / background are the shared `Domain/Capture` vocabulary —
 /// `--size appstore-6.9` on a recording means the same pixels as
 /// `--size appstore-6.9` on a screenshot or as `?size=appstore-6.9` on
-/// the HTTP routes. See `docs/features/capture-size.md`.
+/// the HTTP routes. See `docs/features/capture-size/README.md`.
 ///
 /// The plan is resolved against the *source* — the simulator's own frame
 /// size, which isn't known until the first surface arrives — so nothing

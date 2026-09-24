@@ -1,7 +1,7 @@
 import ProjectDescription
 
 // The phone-side of baguette's device twin — see
-// ../../docs/features/device-twin.md. Three targets:
+// ../../docs/features/device-twin/README.md. Three targets:
 //
 //   DeviceTwinCompanion  the app: pairing settings + broadcast picker
 //   DeviceTwinBroadcast  ReplayKit upload extension: screen → H.264 →

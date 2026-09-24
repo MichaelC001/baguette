@@ -87,7 +87,7 @@ design before coding**. Briefly produce:
 1. **Wire shape** — the JSON envelope on `baguette serve` WS / `baguette input` stdin. Field names, optional vs required, default values.
 2. **CLI surface** — subcommand + flag names. Match existing patterns (`--udid`, `--width`, `--height`).
 3. **Domain types** — value types (struct/enum) and which `@Mockable` abstraction is added/changed. Rich domain: behaviour lives on the value, not in a service (`DeviceButton.press`, `KeyboardKey.press` are the templates). **Name new abstractions for their domain role** — `Subprocess`, `DeviceHost`, `Accessibility`. **Never `XxxPort` / `XxxService` / `XxxManager`, and never the suffix `XxxRepository`.** If the abstraction *is* aggregate CRUD (load / save / delete by identity for an aggregate root), name it as the **plural collection noun** — `Simulators`, `Chromes`, `Books`. If the noun isn't obvious, the abstraction probably shouldn't exist yet.
-4. **Adapter changes** — how the production class (`IndigoHIDInput`, `AXPTranslatorAccessibility`, `SimDeviceLogStream`, …) handles it. Which private-API symbol, which arg shape. Flag iOS-26-specific gotchas explicitly (signature drift between idb/AXe and Xcode 26 has burned us before — see [`buttons.md`](../../../docs/features/buttons.md) for the canonical example).
+4. **Adapter changes** — how the production class (`IndigoHIDInput`, `AXPTranslatorAccessibility`, `SimDeviceLogStream`, …) handles it. Which private-API symbol, which arg shape. Flag iOS-26-specific gotchas explicitly (signature drift between idb/AXe and Xcode 26 has burned us before — see [`buttons.md`](../../../docs/features/buttons/README.md) for the canonical example).
 5. **I/O split (only when the adapter wraps 3rd-party I/O)** — read [CLAUDE.md's "Splitting an adapter that wraps 3rd-party I/O"](../../../CLAUDE.md#splitting-an-adapter-that-wraps-3rd-party-io) section and pick a pattern:
    - **One-shot fetch** (single private-API call → operate on the value): lift the post-fetch logic into a pure static factory in `Domain/` (`AXNode.walk(from:transform:)`, `AXFrameTransform`, `LineBuffer`). The adapter shrinks to "make the call, hand the result to the static factory." No new abstraction needed.
    - **Conversational I/O** (start / stream / signal-exit / terminate): introduce one small `@Mockable` collaborator named like a domain noun (`Subprocess`, never `LogProcessPort`). The orchestrator depends on `any Subprocess`; tests inject `MockSubprocess`. The concrete impl (`HostSubprocess` ~30–50 LOC) is integration-only and should be excluded from coverage.
@@ -257,7 +257,7 @@ For `IndigoHIDInput` (and any future direct private-symbol caller):
   `[hid] symbols resolved …` line.
 - Match the arg signature against a verified open-source bridge (see
   the `kittyfarm` typedef approach used for the buttons feature in
-  [`docs/features/buttons.md`](../../../docs/features/buttons.md)) —
+  [`docs/features/buttons/README.md`](../../../docs/features/buttons/README.md)) —
   guessing the signature from older `idb` / AXe code has burned us
   before.
 - Add `log(...)` lines at each branch (symbol resolved, message
@@ -297,9 +297,9 @@ reporting completion:
 ### 4a. Feature doc
 
 Create or update `docs/features/<feature>.md`. Match the existing
-shape ([`buttons.md`](../../../docs/features/buttons.md),
-[`keyboard.md`](../../../docs/features/keyboard.md),
-[`screenshot.md`](../../../docs/features/screenshot.md)):
+shape ([`buttons.md`](../../../docs/features/buttons/README.md),
+[`keyboard.md`](../../../docs/features/keyboard/README.md),
+[`screenshot.md`](../../../docs/features/screenshot/README.md)):
 
 - One-paragraph **what + why** intro listing all entry points (CLI,
   wire JSON, browser).
@@ -388,10 +388,10 @@ next agent will mis-propose stale invocations.
 - [`CLAUDE.md`](../../../CLAUDE.md) — authoritative architecture + iOS-26
   gotchas (the 9-arg `IndigoHIDMessageForMouseNSEvent` recipe, the
   MainActor requirement, the wire-coordinate convention).
-- [`docs/features/buttons.md`](../../../docs/features/buttons.md) — the
+- [`docs/features/buttons/README.md`](../../../docs/features/buttons/README.md) — the
   reverse-engineering canonical: how we found the iOS-26 4-arg
   `HIDArbitrary(target, page, usage, op)` signature.
-- [`docs/features/keyboard.md`](../../../docs/features/keyboard.md) —
+- [`docs/features/keyboard/README.md`](../../../docs/features/keyboard/README.md) —
   end-to-end feature with focus-gated browser capture, CLI, and wire.
 - [Architecture diagram patterns](references/architecture-diagrams.md)
 - [Rich domain model patterns](references/domain-models.md)

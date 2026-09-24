@@ -6,10 +6,10 @@ import Foundation
 ///
 /// Records a booted simulator's screen straight to an H.264 file, at the
 /// same output sizes `baguette screenshot` and the browser's capture
-/// picker speak (`docs/features/capture-size.md`).
+/// picker speak (`docs/features/capture-size/README.md`).
 ///
 /// **This is the one place server-side recording belongs.**
-/// `docs/features/recording.md` rejects server-side recording for the
+/// `docs/features/recording/README.md` rejects server-side recording for the
 /// live-stream / device-farm case on two grounds — an `ffmpeg -c copy`
 /// tap never sees the SPS/PPS `H264Encoder` emits only on its first IDR,
 /// and a parallel encode adds an N+1th VideoToolbox session next to the
@@ -33,7 +33,7 @@ struct RecordCommand: AsyncParsableCommand {
             runs.
 
             Live browser sessions record in the browser instead — see \
-            docs/features/recording.md.
+            docs/features/recording/README.md.
             """
     )
 

@@ -18,7 +18,7 @@ import IOSurface
 /// stay integration-only.
 ///
 /// **Why a server-side encoder is fine here and not in `serve`:**
-/// `docs/features/recording.md` rejects server-side recording for the
+/// `docs/features/recording/README.md` rejects server-side recording for the
 /// live-stream / device-farm case because it would add an N+1th
 /// VideoToolbox session next to the one each booted device already runs
 /// for its live AVCC stream, and because an `ffmpeg -c copy` tap never

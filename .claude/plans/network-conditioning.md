@@ -36,7 +36,7 @@ Everything below landed with motion (PR #61) and is deliberately generic:
 | Dylib build/stage | `VirtualMotion/build.sh`, root `build.sh`, `Package.swift` | mirror for `VirtualNetwork/` |
 | Route + session shape | `Server.applyMotion` / `MotionSessions` | network is **stateless** — no ledger, so simpler |
 
-Read `docs/features/motion.md` first. It documents the injection channel, the
+Read `docs/features/motion/README.md` first. It documents the injection channel, the
 relaunch rule, and the `os_log`-not-`NSLog` rule (that one is load-bearing:
 `NSLog` from an injected dylib pollutes the stdout of every spawned process,
 including the `launchctl` used to read `DYLD_INSERT_LIBRARIES`).
@@ -158,7 +158,7 @@ Each cycle red → green → commit, full suite green before moving on.
 7. Server `parseNetworkRequest` / `applyNetwork` / `clearNetwork` + routes.
 8. Dylib + `build.sh`/`Package.swift` staging.
 9. Browser card.
-10. Docs: `docs/features/network.md`, CHANGELOG, `skills/baguette/` refs.
+10. Docs: `docs/features/network/README.md`, CHANGELOG, `skills/baguette/` refs.
 
 ## 8. Limits to state honestly in the docs
 

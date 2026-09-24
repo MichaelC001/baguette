@@ -10,7 +10,7 @@
 // the socket down. The Mac side enumerates AVCaptureDevices and
 // pumps the chosen camera's BGRA frames into `/tmp/SimCam.bgra` — a
 // shared-memory ring buffer the VirtualCamera dylib reads inside the
-// simulator. See `docs/features/camera.md`.
+// simulator. See `docs/features/camera/README.md`.
 //
 // The source can also be an uploaded still image or a looping video
 // instead of a live webcam: pick image/video, choose a file (POSTed to

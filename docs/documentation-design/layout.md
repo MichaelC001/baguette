@@ -52,7 +52,7 @@ They don't care which domain role, private symbol or HID usage page changed; tha
 
 **Before (0.1.99):** a 1,100-char `Added` bullet mixes the new command with a domain protocol change, packaging, model-definition fields and a socket message change:
 
-> - **`baguette hinge`** and `POST /simulators/<udid>/hinge` fold iPhone Duo — `--pose closed|open|flat` or `--angle`, swept over Device Hub's 0.8 s — through `HingeControl`, a guest-side executable (the first non-dylib under `Injected/`) that reproduces the HID pose events Device Hub's `dtuhidd` dispatches. `docs/features/hinge.md` records the route. `Subprocess` gains `runInteractive` / `write` … Packaging: the homebrew formula needs one plain-link entry … Model definitions gain `asset.xcodeResource`, `scene.restRotation`, … the 3D socket's `screen_quad` gains `pieces`, `buttons` and `litPanel`, and `set_3d_camera` takes `orientation`.
+> - **`baguette hinge`** and `POST /simulators/<udid>/hinge` fold iPhone Duo — `--pose closed|open|flat` or `--angle`, swept over Device Hub's 0.8 s — through `HingeControl`, a guest-side executable (the first non-dylib under `Injected/`) that reproduces the HID pose events Device Hub's `dtuhidd` dispatches. `docs/features/hinge/README.md` records the route. `Subprocess` gains `runInteractive` / `write` … Packaging: the homebrew formula needs one plain-link entry … Model definitions gain `asset.xcodeResource`, `scene.restRotation`, … the 3D socket's `screen_quad` gains `pieces`, `buttons` and `litPanel`, and `set_3d_camera` takes `orientation`.
 
 A plugin author reading `screen_quad` has to find it in the last sentence of a bullet about folding.
 
@@ -168,7 +168,7 @@ Start with the [README](../README.md). For exact flags, see [commands](commands.
 Guides: [wire protocol](wire.md) · [serve routes](serve.md) · [architecture](ARCHITECTURE.md)
 ```
 
-**Alphabetical, not grouped.** Grouping needs a `group:` field in every doc plus a rule for picking one. Ctrl-F across 33 one-line descriptions is enough until people get lost.
+**Alphabetical, not grouped.** Grouping needs a `group:` field in every doc plus a rule for picking one. Ctrl-F across 32 one-line descriptions is enough until people get lost.
 
 ---
 

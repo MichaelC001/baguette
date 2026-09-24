@@ -13,7 +13,7 @@ import Foundation
 /// `--size` speaks the shared capture-size vocabulary — the same preset
 /// ids the toolbar picker and the recorder use, so "App Store 6.9″"
 /// means the same pixels wherever you ask for it. See
-/// `docs/features/capture-size.md`.
+/// `docs/features/capture-size/README.md`.
 struct ScreenshotCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "screenshot",
