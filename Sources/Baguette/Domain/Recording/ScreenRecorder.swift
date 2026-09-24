@@ -12,7 +12,7 @@ import IOSurface
 ///
 /// ## Why a server-side recorder is right *here* and wrong for `serve`
 ///
-/// `docs/features/recording.md` records that server-side recording was
+/// `docs/features/recording/README.md` records that server-side recording was
 /// tried for the live-stream / device-farm case and rejected twice over:
 /// an `ffmpeg -c copy` tap never sees the SPS/PPS that `H264Encoder`
 /// emits only on the first IDR, and a parallel `Screen` subscription

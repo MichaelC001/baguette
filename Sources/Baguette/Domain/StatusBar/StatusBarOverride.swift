@@ -4,7 +4,7 @@ import Foundation
 /// field is optional: a caller overrides only the indicators it cares
 /// about and leaves the rest at the simulator's live values. Mirrors
 /// the flags accepted by `xcrun simctl status_bar <udid> override` —
-/// see `docs/features/status-bar.md` for the verified flag surface.
+/// see `docs/features/status-bar/README.md` for the verified flag surface.
 ///
 /// The value is the unit-testable core of the feature: `overrideArguments`
 /// is a pure projection to the argv tail simctl expects, with the
@@ -83,7 +83,7 @@ public struct StatusBarOverride: Equatable, Sendable {
     /// into an override, so a UI can read the device's current state
     /// before editing. simctl prints numeric codes, not wire names —
     /// the per-field `init?(listCode:)` tables (captured from Xcode 26,
-    /// see `docs/features/status-bar.md`) map them back. Lines that
+    /// see `docs/features/status-bar/README.md`) map them back. Lines that
     /// aren't present leave their fields `nil`; an empty list parses to
     /// an empty override.
     public static func fromListOutput(_ output: String) -> StatusBarOverride {

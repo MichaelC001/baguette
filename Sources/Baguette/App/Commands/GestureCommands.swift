@@ -55,7 +55,7 @@ struct TapCommand: ParsableCommand {
 ///
 /// The browser / `baguette input` paths already cover this by sending
 /// four `touch1-down` / `touch1-up` lines on one long-lived connection —
-/// see `docs/features/double-tap.md`. What this command adds is the
+/// see `docs/features/double-tap/design.md`. What this command adds is the
 /// same recipe inside a **single process**, because two back-to-back
 /// `baguette tap` invocations spend so long in process startup that
 /// `UITapGestureRecognizer` times out between them.

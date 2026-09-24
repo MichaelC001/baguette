@@ -11,7 +11,7 @@ import Mockable
 /// simulator, and locationd refuses a motion-activity subscription outright,
 /// so the only way in is a dylib injected into the app under test. The
 /// production impl is `SharedFileMotion` (Infrastructure); see
-/// `docs/features/motion.md`.
+/// `docs/features/motion/README.md`.
 @Mockable
 protocol Motion: AnyObject, Sendable {
     /// State what the device is doing, and arm the dylib so apps launched

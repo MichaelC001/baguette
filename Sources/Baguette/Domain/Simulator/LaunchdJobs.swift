@@ -7,7 +7,7 @@ import Foundation
 /// Reclaiming the input surface restarts backboardd, and SpringBoard
 /// goes down with it; "the simulator is usable again" means SpringBoard
 /// is back under a **new** pid, which is what this answers. Pure parse,
-/// per CLAUDE.md's one-shot-fetch split — the spawn is the adapter's.
+/// per AGENTS.md's one-shot-fetch split — the spawn is the adapter's.
 struct LaunchdJobs: Equatable, Sendable {
     /// Running jobs only, keyed by label.
     var pids: [String: Int32]

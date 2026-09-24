@@ -20,6 +20,36 @@ digitizer target `0x32`. Tools that use the correct new signature can
 inject from the host again — no in-process code, no app injection,
 no `DYLD_INSERT_LIBRARIES`. Baguette ships that path.
 
+## Why this works on iOS 26.4 when older tools don't
+
+Three calling-convention changes in iOS 26 / Xcode 26 broke every
+public simulator-control tool. The 9-argument signature above is the
+first; the other two:
+
+1. **Streaming touches and edge gestures need a real `IOHIDEvent`.**
+   For these, the Xcode 26 `IndigoHIDMessageForMouseNSEvent` either
+   misroutes to the home gesture or silently drops. Baguette builds an
+   `IOHIDEventCreateDigitizerEvent` parent +
+   `IOHIDEventCreateDigitizerFingerEvent` child, runs it through
+   `IndigoHIDMessageForTrackpadEventFromHIDEventRef`, then patches the
+   byte slots the wrapper leaves uninitialised (`IndigoHIDTouchTarget`
+   + the `IndigoHIDEdge` bitmask). That recipe is behind the
+   home-indicator swipe, the app-switcher drag and the Lock Screen /
+   Notification Center pull-downs.
+2. **Camera substitution needs a per-app dylib.** No SimulatorKit
+   symbol fakes the camera, so `VirtualCamera.dylib` is loaded into
+   every simulator-launched app via `DYLD_INSERT_LIBRARIES`. It hooks
+   `AVCaptureVideoPreviewLayer.setSession:`, `AVCapturePhotoOutput`
+   and `UIImagePickerController`, and reads BGRA frames from a mmap'd
+   buffer baguette fills from a Mac webcam. Installing it under a
+   per-hash path dodges iOS 26's simulator dyld page-hash cache, which
+   rejects a replaced dylib at the same path.
+
+The HID recipe is commented in
+`Sources/Baguette/Infrastructure/Input/IndigoHIDInput.swift`; the
+camera pipeline lives in `Sources/Baguette/Infrastructure/Camera/` and
+`Injected/VirtualCamera/` (see [`features/camera/README.md`](features/camera/README.md)).
+
 ## Two consumers
 
 Baguette has two ways to drive a simulator: via stdin JSON (a
@@ -60,7 +90,7 @@ per-session warmup that should only happen once.
 > editor or agent host driving it over stdin. That's the opposite
 > direction from a **baguette plugin**, which baguette spawns and which
 > calls *back* into a running `serve` over HTTP. Same word, opposite
-> arrow; see [`features/plugins.md`](features/plugins.md) for the
+> arrow; see [`features/plugins/README.md`](features/plugins/README.md) for the
 > second one.
 
 ## Three-layer code split
@@ -297,6 +327,9 @@ corner instead of an oval.
 
 ## Server route surface
 
+The shape of the route tree; the complete, current table is
+[`serve.md`](serve.md).
+
 ```
 GET  /                                      302 → /simulators
 GET  /simulators                            sim.html
@@ -418,9 +451,10 @@ code. The `Tests` scheme runs in a few seconds without a booted sim.
 
 ## Further reading
 
-- [`../README.md`](../README.md) — quickstart, CLI reference, wire
-  protocol.
-- [`features/plugins.md`](features/plugins.md) — the plugin contract:
+- [`../README.md`](../README.md) — quickstart; [`commands.md`](commands.md)
+  — every flag; [`wire.md`](wire.md) — the gesture wire;
+  [`serve.md`](serve.md) — every `serve` route.
+- [`features/plugins/README.md`](features/plugins/README.md) — the plugin contract:
   manifest schema, the command's JSON answer, the capability table and
   what it does and doesn't guarantee, bakery distribution.
 - `../Sources/Baguette/Infrastructure/Input/IndigoHIDInput.swift` —

@@ -8,7 +8,7 @@ import Mockable
 /// This is the conversational boundary `baguette record` talks to the
 /// outside world across — `AVAssetWriter` wants a back-and-forth (start
 /// a session, feed it a buffer with a presentation time, finish and
-/// flush), which is exactly the shape CLAUDE.md's second adapter pattern
+/// flush), which is exactly the shape AGENTS.md's second adapter pattern
 /// calls for: one small `@Mockable` collaborator named as a domain noun,
 /// with the orchestration (`ScreenRecorder`) depending on `any Reel` and
 /// unit-tested through `MockReel`. The concrete `AVAssetWriterReel` is a

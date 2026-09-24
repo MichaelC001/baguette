@@ -7,7 +7,7 @@ import Foundation
 /// `Touch1` carries. It is the one thing a streamed touch could say
 /// and a one-shot tap could not, which is why a browser touch on a
 /// CarPlay nav-bar button worked while the identical wire `tap` was
-/// swallowed — see `docs/features/touches.md`.
+/// swallowed — see `docs/features/touches/README.md`.
 struct Tap: Gesture, Equatable {
     static let wireType = "tap"
 

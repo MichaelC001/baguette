@@ -44,7 +44,7 @@ event source, a process boundary, …), the repository carve-out
 doesn't apply — pick a role-noun like `Subprocess` / `LogStream`
 instead.
 
-Read [`CLAUDE.md`](../../../CLAUDE.md) — the "TDD is non-negotiable" gate,
+Read [`AGENTS.md`](../../../AGENTS.md) — the "TDD is non-negotiable" gate,
 the naming rule, and the orchestrator-vs-collaborator split for adapters
 that wrap 3rd-party I/O are authoritative there. This skill describes
 the **process** of adding features that fit those rules.
@@ -71,10 +71,9 @@ the **process** of adding features that fit those rules.
 │     subcommand · WS route · browser IIFE (when user-facing)  │
 ├──────────────────────────────────────────────────────────────┤
 │  4. DOCS + CHANGELOG (mandatory before reporting "done")      │
-│     create or update `docs/features/<feature>.md` ·           │
-│     update `CHANGELOG.md` Unreleased section ·                │
-│     update `skills/baguette/` references when CLI / wire     │
-│     surface changed                                           │
+│     `docs/features/<feature>/README.md` (+ `design.md` for    │
+│     private-API research) · one CHANGELOG line · `make docs`  │
+│     · `make check-docs` clean for the files you touched       │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,8 +86,8 @@ design before coding**. Briefly produce:
 1. **Wire shape** — the JSON envelope on `baguette serve` WS / `baguette input` stdin. Field names, optional vs required, default values.
 2. **CLI surface** — subcommand + flag names. Match existing patterns (`--udid`, `--width`, `--height`).
 3. **Domain types** — value types (struct/enum) and which `@Mockable` abstraction is added/changed. Rich domain: behaviour lives on the value, not in a service (`DeviceButton.press`, `KeyboardKey.press` are the templates). **Name new abstractions for their domain role** — `Subprocess`, `DeviceHost`, `Accessibility`. **Never `XxxPort` / `XxxService` / `XxxManager`, and never the suffix `XxxRepository`.** If the abstraction *is* aggregate CRUD (load / save / delete by identity for an aggregate root), name it as the **plural collection noun** — `Simulators`, `Chromes`, `Books`. If the noun isn't obvious, the abstraction probably shouldn't exist yet.
-4. **Adapter changes** — how the production class (`IndigoHIDInput`, `AXPTranslatorAccessibility`, `SimDeviceLogStream`, …) handles it. Which private-API symbol, which arg shape. Flag iOS-26-specific gotchas explicitly (signature drift between idb/AXe and Xcode 26 has burned us before — see [`buttons.md`](../../../docs/features/buttons.md) for the canonical example).
-5. **I/O split (only when the adapter wraps 3rd-party I/O)** — read [CLAUDE.md's "Splitting an adapter that wraps 3rd-party I/O"](../../../CLAUDE.md#splitting-an-adapter-that-wraps-3rd-party-io) section and pick a pattern:
+4. **Adapter changes** — how the production class (`IndigoHIDInput`, `AXPTranslatorAccessibility`, `SimDeviceLogStream`, …) handles it. Which private-API symbol, which arg shape. Flag iOS-26-specific gotchas explicitly (signature drift between idb/AXe and Xcode 26 has burned us before — see [`buttons/design.md`](../../../docs/features/buttons/design.md) for the canonical example).
+5. **I/O split (only when the adapter wraps 3rd-party I/O)** — read [AGENTS.md's "Splitting an adapter that wraps 3rd-party I/O"](../../../AGENTS.md#splitting-an-adapter-that-wraps-3rd-party-io) section and pick a pattern:
    - **One-shot fetch** (single private-API call → operate on the value): lift the post-fetch logic into a pure static factory in `Domain/` (`AXNode.walk(from:transform:)`, `AXFrameTransform`, `LineBuffer`). The adapter shrinks to "make the call, hand the result to the static factory." No new abstraction needed.
    - **Conversational I/O** (start / stream / signal-exit / terminate): introduce one small `@Mockable` collaborator named like a domain noun (`Subprocess`, never `LogProcessPort`). The orchestrator depends on `any Subprocess`; tests inject `MockSubprocess`. The concrete impl (`HostSubprocess` ~30–50 LOC) is integration-only and should be excluded from coverage.
 6. **Frontend** — does the browser need to send / receive this? If yes, which IIFE(s) change.
@@ -257,7 +256,7 @@ For `IndigoHIDInput` (and any future direct private-symbol caller):
   `[hid] symbols resolved …` line.
 - Match the arg signature against a verified open-source bridge (see
   the `kittyfarm` typedef approach used for the buttons feature in
-  [`docs/features/buttons.md`](../../../docs/features/buttons.md)) —
+  [`docs/features/buttons/design.md`](../../../docs/features/buttons/design.md)) —
   guessing the signature from older `idb` / AXe code has burned us
   before.
 - Add `log(...)` lines at each branch (symbol resolved, message
@@ -288,6 +287,12 @@ Each new gesture / verb flows through the same checklist:
      and mount it from `sim-native.js` and/or `farm/farm-tile.js`.
    - The frontend stays a **dumb sender**: no HID codes, no chrome
      lookups, no domain logic. The Swift side owns rich domain.
+   - Small, reusable browser logic gets a `node:test` unit test —
+     see [references/js-testing.md](references/js-testing.md).
+
+A new **stream format** is one `Stream` impl in `Infrastructure/Stream/`
+plus one case in `StreamFormat.makeStream`; its byte envelope lives in
+`Domain/Stream/Envelope.swift`. No call site switches on the format.
 
 ## Phase 4: Docs + Changelog (mandatory before "done")
 
@@ -296,48 +301,45 @@ reporting completion:
 
 ### 4a. Feature doc
 
-Create or update `docs/features/<feature>.md`. Match the existing
-shape ([`buttons.md`](../../../docs/features/buttons.md),
-[`keyboard.md`](../../../docs/features/keyboard.md),
-[`screenshot.md`](../../../docs/features/screenshot.md)):
+Follow [`docs/documentation-design/`](../../../docs/documentation-design/README.md):
+each fact has one home, and every doc links instead of copying.
 
-- One-paragraph **what + why** intro listing all entry points (CLI,
-  wire JSON, browser).
-- **Wire JSON** examples (every shape, with required + optional fields explained).
-- **Dispatch path** — which Input method, which SimulatorKit symbol,
-  which arg shape (with the iOS-26 signature gotcha documented if
-  relevant).
-- **Where the magic numbers come from** — link to the spec / chrome
-  bundle / Apple HID page so the next maintainer can verify them.
-- **Adding a new <thing>** — five-step recipe matching the
-  Phase-1→3 checklist above.
-- **Known limits** — be honest about phase-1 scope (no IME, no
-  emoji, no F-keys, etc.).
+- **`docs/features/<feature>/README.md`** (≤200 lines), for someone
+  *using* the feature: a `description:` frontmatter line (what + when,
+  ≤250 chars), quick start, workflows, the feature's own HTTP /
+  WebSocket routes and messages (one example each), gotchas, see also.
+  No flag tables — link `../../commands.md#baguette-<cmd>`. No file maps.
+  Match [`shake`](../../../docs/features/shake/README.md).
+- **`docs/features/<feature>/design.md`**, only when there is research
+  the code can't explain: the path to the irreducible private call,
+  which symbol and arg shape, where each magic number was measured
+  (spec / chrome bundle / Apple HID page), ordering that matters, dead
+  ends tried, known limits in full. This is where the iOS-26 gotchas go.
+- A new gesture's envelope goes in [`docs/wire.md`](../../../docs/wire.md);
+  a new route gets one row in [`docs/serve.md`](../../../docs/serve.md)
+  linking to the feature README.
+- A limit every agent must know on every task gets **one line** in
+  AGENTS.md's "Known limits", linking to the `design.md`.
 
 ### 4b. CHANGELOG
 
-Append a bullet under `## [Unreleased]` → `### Added` (or `### Changed`
-for behaviour changes). Match the prose tone of existing entries —
-explain WHAT shipped, WHY it matters, and any non-obvious gotcha
-(e.g. the iOS-26 4-arg signature for buttons). Link the feature doc.
+One bullet under `## [Unreleased]`, ≤300 chars (URLs excluded).
+`Removed` / `Changed` before `Added`; anything incompatible starts with
+`Breaking:`. Start with what the user types or clicks, say the effect —
+not the type, symbol or file (those go in the PR and `design.md`) —
+and end with the docs + PR links:
 
 ```md
-- **<Feature name>.** One-sentence summary of what shipped and the
-  primary entry point. Mention any iOS-26 / SimulatorKit gotcha worth
-  preserving for future maintainers. See [`docs/features/<feature>.md`](docs/features/<feature>.md).
+- `baguette hinge` folds iPhone Duo to a pose or an angle, swept like Device Hub. → [docs](docs/features/hinge/README.md) ([#NN](https://github.com/tddworks/baguette/pull/NN))
 ```
 
-### 4c. Skill references
+### 4c. Generated docs
 
-If the feature changed the **CLI surface** or **wire-protocol
-envelope**, also update:
-
-- `skills/baguette/SKILL.md` — the "What's wired vs what isn't" list.
-- `skills/baguette/references/cli.md` — new flags / subcommands.
-- `skills/baguette/references/wire-protocol.md` — new envelope shapes.
-
-These files are what the agent skill loads; if they're stale, the
-next agent will mis-propose stale invocations.
+Run `make docs`: it regenerates `docs/commands.md`, the `docs/README.md`
+index and the `baguette` skill's references from the binary and the
+docs. Never hand-edit those. Then `make check-docs` must report nothing
+new for the files you touched. Update `skills/baguette/SKILL.md`'s
+"What's wired vs what isn't" list if the CLI or wire surface changed.
 
 ## Anti-patterns to avoid
 
@@ -385,13 +387,13 @@ next agent will mis-propose stale invocations.
 
 ## References
 
-- [`CLAUDE.md`](../../../CLAUDE.md) — authoritative architecture + iOS-26
+- [`AGENTS.md`](../../../AGENTS.md) — authoritative architecture + iOS-26
   gotchas (the 9-arg `IndigoHIDMessageForMouseNSEvent` recipe, the
   MainActor requirement, the wire-coordinate convention).
-- [`docs/features/buttons.md`](../../../docs/features/buttons.md) — the
+- [`docs/features/buttons/design.md`](../../../docs/features/buttons/design.md) — the
   reverse-engineering canonical: how we found the iOS-26 4-arg
   `HIDArbitrary(target, page, usage, op)` signature.
-- [`docs/features/keyboard.md`](../../../docs/features/keyboard.md) —
+- [`docs/features/keyboard/README.md`](../../../docs/features/keyboard/README.md) —
   end-to-end feature with focus-gated browser capture, CLI, and wire.
 - [Architecture diagram patterns](references/architecture-diagrams.md)
 - [Rich domain model patterns](references/domain-models.md)
@@ -434,8 +436,9 @@ next agent will mis-propose stale invocations.
       integration-only — make sure it actually works end-to-end)
 
 ### Phase 4 — Docs + Changelog
-- [ ] `docs/features/<feature>.md` created or updated
-- [ ] `CHANGELOG.md` Unreleased entry written in the existing prose tone
+- [ ] `docs/features/<feature>/README.md` created or updated, with `description:`
+- [ ] `design.md` for any private-API research; one AGENTS.md line if every agent needs it
+- [ ] `docs/wire.md` / `docs/serve.md` updated if the gesture wire or routes changed
+- [ ] One `CHANGELOG.md` [Unreleased] bullet, ≤300 chars, with docs + PR links
+- [ ] `make docs` run; `make check-docs` clean for touched files
 - [ ] `skills/baguette/SKILL.md` "What's wired" list updated (if CLI/wire changed)
-- [ ] `skills/baguette/references/cli.md` updated (if CLI changed)
-- [ ] `skills/baguette/references/wire-protocol.md` updated (if wire changed)

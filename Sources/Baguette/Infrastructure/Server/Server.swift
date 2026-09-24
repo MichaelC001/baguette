@@ -351,7 +351,7 @@ struct Server: Sendable {
         // Unlike location there is no simctl verb behind this: all three
         // CoreMotion surfaces report unavailable in a stock simulator. Only
         // apps launched *after* the POST see anything — dyld inserts at exec
-        // time. See `docs/features/motion.md`.
+        // time. See `docs/features/motion/README.md`.
         router.post("/simulators/:udid/motion") { [simulators, motionSessions] r, _ in
             if let rejected = rejectUntrustedBrowser(r) { return rejected }
             let buffer = try? await r.body.collect(upTo: 64 * 1024)
@@ -411,7 +411,7 @@ struct Server: Sendable {
         // one simulator means injecting into the app under test. Only apps
         // launched *after* the POST are conditioned — dyld inserts at exec
         // time — though changing the condition afterwards reaches a running
-        // app fine. See `docs/features/network.md`.
+        // app fine. See `docs/features/network/README.md`.
         router.post("/simulators/:udid/network") { [simulators] r, _ in
             if let rejected = rejectUntrustedBrowser(r) { return rejected }
             let buffer = try? await r.body.collect(upTo: 64 * 1024)
@@ -2150,7 +2150,7 @@ struct Server: Sendable {
         /// full quality is what keeps that intermediate from showing
         /// up as ringing in something the extension promises is
         /// lossless. It is still not bit-exact — see
-        /// `docs/features/screenshot.md`.
+        /// `docs/features/screenshot/design.md`.
         var defaultQuality: Double {
             switch self {
             case .jpeg: return 0.85

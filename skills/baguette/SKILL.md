@@ -40,7 +40,7 @@ baguette list --json                       # machine-readable: {running, availab
 # 2. Boot one if nothing is running. Under Xcode 27 this also reclaims
 #    the input surface from Device Hub; if a device was booted some other
 #    way and taps ack but nothing happens, run `baguette heal --udid <UDID>`
-#    (restarts SpringBoard — see references/cli.md).
+#    (restarts SpringBoard — see references/commands.md#baguette-heal).
 baguette boot --udid <UDID>
 
 # 3. Get the screen size — you need this for every gesture.
@@ -101,7 +101,7 @@ baguette tap --udid X --x 219 --y 478 --width 438 --height 954
 ```
 
 For the full wire-format spec (every gesture type with examples), read
-`references/wire-protocol.md`.
+`references/wire.md`.
 
 ## Visual verification — let the agent see what happened
 
@@ -192,7 +192,7 @@ Wired (use freely):
   (print the sim's pasteboard raw) and `baguette clipboard sync`
   (host Mac pasteboard → sim, full-fidelity — images included).
   Needs a booted device. See
-  [`docs/features/paste.md`](../../docs/features/paste.md).
+  [`docs/features/paste/README.md`](../../docs/features/paste/README.md).
 - `copy` — the sim→host interactive mirror of `paste`: press Cmd+C
   sim-side (focused field copies its selection), then ferry the
   pasteboard onto the host Mac's clipboard, full-fidelity — images
@@ -203,7 +203,7 @@ Wired (use freely):
   screen has focus sends it. CLI: `baguette clipboard copy --udid <X>`
   is a pure ferry (no keystroke). Browser copy targets the machine
   running baguette (local-dev happy path). Needs a booted device.
-  See [`docs/features/paste.md`](../../docs/features/paste.md).
+  See [`docs/features/paste/README.md`](../../docs/features/paste/README.md).
 - `describe-ui` — dump the on-screen accessibility tree as JSON
   (per-node `role`, `label`, `value`, `identifier`, `frame` in
   device points, recursive `children`). CLI:
@@ -223,7 +223,7 @@ Wired (use freely):
   check for, not a failure; `unsupported` means the runtime lacks the
   setting. Neither can be set. Pairs with `describe-ui`: change the
   conditions, re-dump the tree, compare. See
-  [`docs/features/interface.md`](../../docs/features/interface.md).
+  [`docs/features/interface/README.md`](../../docs/features/interface/README.md).
 - `logs` — stream the booted simulator's unified log line-by-line
   to stdout. CLI: `baguette logs --udid <X> [--level info|debug|default]
   [--style default|compact|json|ndjson|syslog] [--predicate ...]
@@ -259,7 +259,7 @@ Wired (use freely):
   browser focus page accepts drag-and-drop onto the device, including
   a bare `.app` **directory** — it's packed into a stored zip in-page
   and posted as `<Name>.app.zip`. See
-  [`docs/features/file-upload.md`](../../docs/features/file-upload.md).
+  [`docs/features/file-upload/README.md`](../../docs/features/file-upload/README.md).
 - `location` — set the device's simulated GPS position (not a HID path;
   shells out to `xcrun simctl location`). `baguette location set --udid
   <X> <lat,lon>` pins a point; `baguette location start --udid <X>
@@ -281,7 +281,7 @@ Wired (use freely):
   simulator entirely (`headingAvailable() == false`), and `course` is
   derived on a flat lat/lon grid so diagonal bearings skew by
   `1/cos(latitude)` (~6.5° at lat 37; cardinals are exact). See
-  [`docs/features/location.md`](../../docs/features/location.md).
+  [`docs/features/location/README.md`](../../docs/features/location/README.md).
 - `motion` — make the device's apps read CoreMotion: `CMMotionActivity`
   (walking / running / cycling / automotive), `CMPedometer` counters, and
   `CMMotionManager` samples. **Not a simctl path** — all three are
@@ -301,7 +301,7 @@ Wired (use freely):
   arming see anything** (dyld inserts at exec time) — relaunch with
   `xcrun simctl launch --terminate-running-process <X> <bundle-id>`.
   Floor counting and the magnetometer are deliberately still unavailable.
-  See [`docs/features/motion.md`](../../docs/features/motion.md).
+  See [`docs/features/motion/README.md`](../../docs/features/motion/README.md).
 - `network` — condition what the device's apps see of the network:
   latency, downlink bandwidth, request loss, hard offline. **Not a simctl
   path** — Network Link Conditioner and the `dnctl`/`pfctl` rules under it
@@ -326,7 +326,7 @@ Wired (use freely):
   conditioned**, since WebKit loads them in its own networking process, so
   a hybrid app is throttled natively but not in its web content; and loss
   is request-level rather than packet-level. See
-  [`docs/features/network.md`](../../docs/features/network.md).
+  [`docs/features/network/README.md`](../../docs/features/network/README.md).
 
 NOT wired (skill should NOT propose these):
 - **Non-ASCII text** through `type` — IME / Pinyin / accented / emoji
@@ -341,7 +341,7 @@ NOT wired (skill should NOT propose these):
   `WS /devices/:udid/stream`) — the host side exists but no companion
   app ships yet, so nothing ever connects; gestures on a device stream
   are rejected with `device control is not wired yet`. Simulators
-  only for now. See `docs/features/device-twin.md`.
+  only for now. See `docs/features/device-twin/README.md`.
 
 ## Composing flows — the smoke-test pattern
 
@@ -389,15 +389,21 @@ If the human wants to follow along visually, also point them at
 
 ## Reference files
 
-- `references/wire-protocol.md` — every gesture type with copy-pasteable
-  JSON examples + the coordinate convention restated.
-- `references/cli.md` — full subcommand list, flags, and exit/output
-  format for each `baguette` command.
+- `references/wire.md` — every gesture type with copy-pasteable JSON
+  examples, the coordinate convention, and where each feature's own
+  messages are documented.
+- `references/commands.md` — every subcommand and flag, generated from
+  the binary, plus exit codes.
+- How to use one feature (location, camera, motion, recording…):
+  its guide at `https://github.com/tddworks/baguette/blob/main/docs/features/<feature>/README.md`.
+
+Both reference files are generated by `make docs` in the baguette repo;
+never edit them here.
 
 Read these on demand — don't pull both into context unless the task
 actually needs the breadth (e.g., authoring a long input pipeline →
-read `wire-protocol.md`; debugging which subcommand to use → read
-`cli.md`).
+read `wire.md`; debugging which subcommand to use → read
+`commands.md`).
 
 ## Install (only when missing)
 

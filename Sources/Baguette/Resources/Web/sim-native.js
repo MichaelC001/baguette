@@ -420,7 +420,7 @@
     // add to Photos. Dumb sender — POSTs the bytes to `/files`; the
     // Swift side routes by extension. The drop zone + highlight are
     // scoped to the device frame so the overlay traces the phone, not
-    // the whole page. See docs/features/file-upload.md.
+    // the whole page. See docs/features/file-upload/README.md.
     if (window.SimFileDrop && !deviceMode) {
       window.__fileDrop =
           window.SimFileDrop.attach(document.getElementById('nativeDeviceFrame'), { udid });
@@ -2311,7 +2311,7 @@
   // the toolbar, and every capture on this page reads it — in 2D and in
   // 3D alike. The vocabulary is shared with the HTTP routes and the CLI
   // and lives in Resources/Web/capture/; see
-  // docs/features/capture-size.md. Nothing here reimplements any of it.
+  // docs/features/capture-size/README.md. Nothing here reimplements any of it.
   //
   // Who applies it differs by verb, because who owns the output canvas
   // differs: a screenshot is composed here, a 3D Save Frame is rendered

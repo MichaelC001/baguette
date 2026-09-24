@@ -1,0 +1,112 @@
+---
+description: Read the frontmost app's accessibility tree — labels, frames in device points, identifiers — or hit-test one point, from the CLI, HTTP or the stream WebSocket. Use to find what to tap without a screenshot.
+---
+
+# Accessibility tree
+
+Read the on-screen UI tree (labels, frames, traits, identifiers) of a
+booted simulator without taking a screenshot or running a test bundle.
+Every flag: [commands.md#baguette-describe-ui](../../commands.md#baguette-describe-ui).
+
+This is the structured-context counterpart to `screenshot.jpg` —
+where the screenshot tells an agent *what it looks like*, the AX
+tree tells it *what's actually there*: button labels, frame
+rectangles in device points, accessibility identifiers, and the
+parent / child structure underneath.
+
+## Quick start
+
+```bash
+baguette describe-ui --udid <UDID>                       # full tree
+baguette describe-ui --udid <UDID> --x 172 --y 880       # the node under one point
+baguette describe-ui --udid <UDID> --output tree.json
+```
+
+## Workflow: find it, then tap it
+
+A node's `frame` is in device points, **letterbox-corrected** for
+devices whose host-window aspect doesn't match their screen. Pipe
+`frame.x + frame.width / 2`, `frame.y + frame.height / 2` straight
+back into a `tap` and the touch lands. Re-read the tree after each
+gesture — it's a snapshot.
+
+## HTTP / WebSocket
+
+On the stream WebSocket (`/simulators/<udid>/stream`, framing in
+[wire.md](../../wire.md)):
+
+```json
+{ "type": "describe_ui" }
+{ "type": "describe_ui", "x": 172, "y": 880 }
+```
+
+- No `x` / `y` → full tree of the frontmost application.
+- Both `x` and `y` → hit-test: returns the topmost AX node whose
+  `frame` contains the point. Coordinates are **device points**,
+  same units as the gesture wire (`tap`, `swipe`, `width`,
+  `height`).
+
+Reply, on the same socket:
+
+```json
+{
+  "type": "describe_ui_result",
+  "ok": true,
+  "tree": {
+    "role": "AXButton",
+    "subrole": null,
+    "label": "Safari",
+    "value": null,
+    "identifier": "Safari",
+    "title": null,
+    "help": "Double tap to open",
+    "frame": { "x": 136, "y": 844.33, "width": 72, "height": 72 },
+    "enabled": true,
+    "focused": false,
+    "hidden": false,
+    "children": []
+  }
+}
+```
+
+`ok: false` with an `error` string when AX isn't available
+(framework missing, simulator not booted, no frontmost app, XPC
+timeout). The CLI exits non-zero in those cases; the WS message
+keeps the socket open and lets the caller try again.
+
+Over HTTP (a trusted browser, or a plugin whose grant carries
+`describe-ui`):
+
+```http
+GET /simulators/<udid>/describe-ui.json
+GET /simulators/<udid>/describe-ui.json?x=172&y=880
+```
+
+## Gotchas
+
+- **Tree is a snapshot.** No subscribe / change notifications.
+  Callers re-issue `describe_ui` after each gesture.
+- **Frontmost-app only.** SpringBoard idle returns `null` for some
+  states. Active app is what you get; we don't expose system-level
+  overlays (Control Centre, Notification Centre).
+- **Group containers occasionally drop children.** Inherited from
+  AXP's behaviour on `role=group`; the
+  [idb#767](https://github.com/facebook/idb/issues/767) workaround
+  is to prefer the `--x --y` hit-test path for elements that don't
+  surface in the full tree.
+- **Slider / progress values stringify NSNumber.** Anything that
+  AXP returns as `NSNumber` for `accessibilityValue` (sliders, page
+  pickers) lands in JSON as a stringified number. JSON consumers
+  that want to discriminate semantics should check `role`.
+- **One XPC handshake per call.** First call after process startup
+  pays a ~hundreds-of-ms warm-up while the AX connection comes up;
+  subsequent calls reuse it. No connection pool.
+- **Status bar and tab-bar items** come from a positional sweep on top
+  of the walk, which costs ~1.5–2 s per full tree — see
+  [the hit-test sweep](../ax-hit-test-sweep/README.md).
+
+## See also
+
+- [design.md](design.md) — the `AXPTranslator` token-dispatcher recipe and the coordinate projection
+- [How `describe-ui` finds every element](../ax-hit-test-sweep/README.md)
+- [AX inspector](../ax-inspector/README.md)

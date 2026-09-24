@@ -34,7 +34,7 @@ struct NetworkCondition: Equatable, Sendable {
     let bandwidthKbps: Double?
 
     /// Percentage of requests failed outright, 0…100. Request-level, not
-    /// packet-level: see `docs/features/network.md`.
+    /// packet-level: see `docs/features/network/README.md`.
     let lossPercent: Double
 
     /// Whether the device reports no connection at all. Distinct from 100%

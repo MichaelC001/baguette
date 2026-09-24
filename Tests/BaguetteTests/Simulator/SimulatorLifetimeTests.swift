@@ -13,7 +13,7 @@ import Foundation
 /// Both default to `false`, which is why a device booted headlessly by
 /// baguette dies the moment someone closes its window in Simulator.app.
 ///
-/// This is CLAUDE.md's one-shot-fetch split: the irreducible call is a
+/// This is AGENTS.md's one-shot-fetch split: the irreducible call is a
 /// pair of `CFPreferences` reads/writes in Infrastructure, and
 /// everything downstream of the fetched plist lives here as a pure
 /// factory — so no `@Mockable` collaborator is needed.

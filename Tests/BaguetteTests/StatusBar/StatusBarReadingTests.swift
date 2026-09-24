@@ -5,7 +5,7 @@ import Foundation
 /// Coverage for `StatusBarOverride.fromListOutput` — the pure parser
 /// that turns `xcrun simctl status_bar <udid> list` output back into a
 /// `StatusBarOverride`. The numeric codes here were captured from
-/// Xcode 26's simctl (see `docs/features/status-bar.md`); the panel
+/// Xcode 26's simctl (see `docs/features/status-bar/README.md`); the panel
 /// reads the current overrides so its controls reflect the device.
 @Suite("StatusBarOverride.fromListOutput")
 struct StatusBarReadingTests {

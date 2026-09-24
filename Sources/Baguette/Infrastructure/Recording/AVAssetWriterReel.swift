@@ -12,13 +12,13 @@ import IOSurface
 /// lands`, `which frames make the cut`, `when to stop`) is already
 /// settled by `ScreenRecorder` and arrives here as a `CapturePlacement`
 /// and a presentation time; this type opens the writer, composites the
-/// surface onto the canvas, and appends. That split is CLAUDE.md's
+/// surface onto the canvas, and appends. That split is AGENTS.md's
 /// "conversational I/O" adapter pattern: the state machine is unit-tested
 /// through `MockReel`, and only the irreducible AVFoundation calls below
 /// stay integration-only.
 ///
 /// **Why a server-side encoder is fine here and not in `serve`:**
-/// `docs/features/recording.md` rejects server-side recording for the
+/// `docs/features/recording/README.md` rejects server-side recording for the
 /// live-stream / device-farm case because it would add an N+1th
 /// VideoToolbox session next to the one each booted device already runs
 /// for its live AVCC stream, and because an `ffmpeg -c copy` tap never

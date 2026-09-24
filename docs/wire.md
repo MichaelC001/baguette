@@ -1,0 +1,156 @@
+---
+description: The JSON gesture wire shared by `baguette input` (stdin), `POST /simulators/<UDID>/input` and the stream WebSocket — envelopes, acks, stream control and coordinates. Read when writing a host plugin or a page that drives a simulator.
+---
+
+# Wire protocol
+
+One JSON object per line (stdin) or per text message (WebSocket), always keyed by `"type"`. The same gesture envelopes reach the simulator from three places:
+
+| Entry point | Transport | Reply |
+|---|---|---|
+| `baguette input --udid <UDID>` | newline-delimited JSON on stdin | one ack line on stdout per input line |
+| `POST /simulators/<UDID>/input` | one envelope as the request body | the ack as the response body |
+| `WS /simulators/<UDID>/stream` ([serve.md](serve.md)) | one text message per envelope | gestures: none; `paste` / `copy` / `describe_ui`: a typed `*_result` frame |
+
+Keep one `baguette input` process per device alive rather than spawning one per gesture: startup costs about a second, and the first gesture pays the HID warm-up.
+
+## Acks and errors
+
+```json
+{"ok":true}
+{"ok":false,"error":"missing field: width"}
+```
+
+A malformed line answers `invalid JSON`; a missing field `missing field: <name>`; a bad value `invalid <field>: expected …`; an unregistered `type` `unknown kind: <type>`. `ok:true` means the message was sent, not that anything on screen reacted — see [device-hub](features/device-hub/README.md) for the Xcode 27 case where every gesture acks and lands nowhere.
+
+## Coordinates
+
+Every `x` / `y` / `startX` / `startY` / `endX` / `endY` / `x1` / `y1` / `x2` / `y2` / `cx` / `cy` is in **device points**, the same units as the `width` and `height` carried in the same envelope. Positional gestures (`tap`, `swipe`, `touch1-*`, `touch2-*`, `pinch`, `pan`) require `width` and `height`; the rest don't take them.
+
+- Take `width` / `height` from `baguette chrome layout --udid <UDID>`'s `screen.width` / `screen.height`. They are per device: 438×954 is iPhone 17 Pro Max only.
+- The wire is **not normalized**. The centre of a 438×954 screen is `x:219, y:478`; `x:0.5, y:0.5` taps the top-left corner.
+- Points, not pixels: pixels on a 3× device overshoot by 3×.
+
+A tap that lands in the wrong place is almost always the wrong device's `width`/`height`, pixels instead of points, or a tap sent during a launch animation.
+
+## Gestures
+
+Every gesture in `GestureRegistry.standard`, one example each. Durations are seconds.
+
+### `tap`
+
+```json
+{"type":"tap","x":219,"y":478,"width":438,"height":954,"duration":0.05}
+```
+
+`duration` defaults to `0.05`. Optional `edge` (`left` / `top` / `right` / `bottom`) builds the same message a streamed touch in that edge band sends; an unknown value is an error, not an interior tap. There is no `double-tap` envelope — send two `touch1-down`/`touch1-up` pairs on one connection, see [double-tap](features/double-tap/README.md).
+
+### `swipe`
+
+```json
+{"type":"swipe","startX":219,"startY":760,"endX":219,"endY":190,"width":438,"height":954,"duration":0.3}
+```
+
+`duration` (default `0.25`) is end to end; the server interpolates the moves.
+
+### `touch1-down` / `touch1-move` / `touch1-up`
+
+```json
+{"type":"touch1-down","x":219,"y":950,"width":438,"height":954,"edge":"bottom"}
+```
+
+One streamed finger, for drags driven by a UI loop. Pair every `down` with an `up`; `move` is optional, typically ~60 Hz. `edge` flags the chain as a system gesture: `bottom` drives the home indicator (Home / App Switcher with live preview), `top` the Lock Screen (left) or Notification Center (right) pull-down. Omit it for interior touches. See [touches](features/touches/README.md).
+
+### `touch2-down` / `touch2-move` / `touch2-up`
+
+```json
+{"type":"touch2-move","x1":150,"y1":478,"x2":288,"y2":478,"width":438,"height":954}
+```
+
+Two streamed fingers — the path for live pinch, rotate and two-finger pan.
+
+### `pinch`
+
+```json
+{"type":"pinch","cx":219,"cy":478,"startSpread":60,"endSpread":240,"width":438,"height":954,"duration":0.6}
+```
+
+One-shot. `cx`/`cy` is the centre; spreads are finger separation in points (growing = zoom in). The server interpolates 10 two-finger steps.
+
+### `pan`
+
+```json
+{"type":"pan","x1":175,"y1":478,"x2":263,"y2":478,"dx":0,"dy":200,"width":438,"height":954,"duration":0.5}
+```
+
+One-shot: both fingers move by `(dx, dy)` points. For apps that ignore one-finger pans (Maps).
+
+### `scroll`
+
+```json
+{"type":"scroll","deltaX":0,"deltaY":-50}
+```
+
+Negative `deltaY` scrolls content up, as on macOS. Both deltas default to `0`.
+
+### `button`
+
+```json
+{"type":"button","button":"action","duration":1.0}
+```
+
+`home`, `lock`, `power`, `volume-up`, `volume-down`, `action`, `app-switcher`, `swipe-to-app-switcher`, `swipe-to-home`, `pull-down-to-lock-screen`, `pull-down-to-notification-center`; on Apple Watch `digital-crown`, `side-button`, `left-side-button`. `duration` holds the button (`0` = short press). See [buttons](features/buttons/README.md).
+
+### `key`
+
+```json
+{"type":"key","code":"KeyA","modifiers":["shift"],"duration":0.2}
+```
+
+`code` is a W3C `KeyboardEvent.code` (letters, digits, `Enter`, `Escape`, `Backspace`, `Tab`, `Space`, arrows, US punctuation); `modifiers` from `shift`, `control`, `option`, `command`. See [keyboard](features/keyboard/README.md).
+
+### `type`
+
+```json
+{"type":"type","text":"hello world"}
+```
+
+Printable US-ASCII only; anything else fails the parse rather than dropping mid-string. Use `paste` for other text.
+
+## Stream control
+
+Accepted on the stream WebSocket alongside gestures; not by `baguette input`, which has no stream.
+
+```json
+{"type":"set_bitrate","bps":4000000}
+{"type":"set_fps","fps":30}
+{"type":"set_scale","scale":2}
+{"type":"force_idr"}
+{"type":"snapshot"}
+```
+
+`set_scale` is an integer divisor (1 = full, 2 = half). `force_idr` asks for a keyframe now, `snapshot` for one snapshot frame. None of them reply.
+
+`baguette stream` reads the same five commands on stdin, but keyed by **`"cmd"`**, not `"type"`: `{"cmd":"set_fps","fps":30}`.
+
+## Messages owned by a feature
+
+These ride the same channels but belong to one feature; their shapes and replies live in that feature's doc.
+
+| Message | Channel | Owner |
+|---|---|---|
+| `paste`, `copy` → `paste_result`, `copy_result` | stdin, stream WS | [paste](features/paste/README.md) |
+| `describe_ui` → `describe_ui_result` | stream WS | [accessibility](features/accessibility/README.md) |
+| `hinge` (server → page, foldables only) | stream WS | [hinge](features/hinge/README.md) |
+| `set_3d_camera`, `screen_quad` | `stream.3d.*` WS | [3d-rendering](features/3d-rendering/README.md) |
+| `log_started`, `log`, `log_stopped`, `stop` | logs WS | [logs](features/logs/README.md) |
+| `camera_list`, `camera_start`, `camera_stop`, `camera_set_flags`, `camera_devices`, `camera_state` | camera WS | [camera](features/camera/README.md) |
+| companion `hello` / `format` | `/devices/…` WS | [device-twin](features/device-twin/README.md) |
+
+## Known limits
+
+- **`siri`** is not a button: every known Indigo path crashes `backboardd`, so it is refused before it reaches the simulator.
+- **`key` / `type`** cover US-ASCII only; no IME, dead keys or emoji. Use `paste`.
+- **Pinch needs two fingers.** `touch1-*` routes correctly but `UIPinchGestureRecognizer` treats it as a pan; use `touch2-*` or `pinch`.
+- **Xcode 27's Device Hub** can leave every gesture acking `ok` while landing nowhere. `baguette boot` repairs it; otherwise run `baguette heal`. See [device-hub](features/device-hub/README.md).
+- **CarPlay**: `baguette input --display carplay` and `?display=carplay` on the stream socket target the CarPlay plane. See [companion-screens](features/companion-screens/README.md).
