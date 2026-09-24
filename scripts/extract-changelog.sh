@@ -20,11 +20,15 @@ if [ ! -f "$CHANGELOG_FILE" ]; then
 fi
 
 # 1. Try versioned section: ## [VERSION]
+# A section ends at the next release, the `---` separator, the "Older
+# releases" line or the reference links — never at an in-section `## `
+# heading such as GitHub's "## New Contributors".
 NOTES=$(awk -v version="$VERSION" '
     /^## \[/ {
         if (printing) { exit }
         if (index($0, "[" version "]") > 0) { printing=1; next }
     }
+    printing && (/^---$/ || /^## Older releases/ || /^\[[^]]+\]: /) { exit }
     printing { print }
 ' "$CHANGELOG_FILE")
 

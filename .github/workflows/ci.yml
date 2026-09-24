@@ -19,6 +19,13 @@ jobs:
       - name: JS unit tests
         run: node --test 'Tests/Web/**/*.test.js'
 
+      # Report-only until the docs migration's last step turns on --strict.
+      - name: Check links, budgets and changelog
+        run: python3 scripts/check-docs.py
+
+      - name: Changelog release scripts
+        run: scripts/test-changelog-release.sh
+
       - name: Setup Swift
         uses: SwiftyLab/setup-swift@latest
         with:

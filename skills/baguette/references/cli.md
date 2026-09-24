@@ -387,7 +387,7 @@ magnetometer compass) is **unavailable in the simulator at all**, and
 `course` is derived on a flat lat/lon grid so **diagonal** bearings come
 back skewed by `1/cos(latitude)` (~6.5° at lat 37, ~18° at lat 60);
 cardinal bearings are exact everywhere. See
-[`docs/features/location.md`](../../docs/features/location.md).
+[`docs/features/location.md`](../../../docs/features/location.md).
 
 Position and waypoints are `lat,lon` **tokens** (not `--lat` / `--lon`
 flags) so a leading `-` in a western/southern coordinate isn't read as an
