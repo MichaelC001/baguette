@@ -4,7 +4,7 @@ description: How baguette's docs are layered (Skill-style progressive disclosure
 
 # Documentation Design
 
-> Status: **adopted**, 2026-09-24. `make check-docs` reports against it in CI (report-only until migration step 7).
+> Status: **adopted**, 2026-09-24. CI fails when `scripts/check-docs.py --strict` reports a problem or a generated doc is stale.
 > Adapted from asc-cli's documentation design; the differences are called out in [Decisions](#decisions).
 
 ## Goal
@@ -206,7 +206,7 @@ Skills follow the same rule: `skills/baguette` carries the agent workflow. Becau
 | `CHANGELOG.md` holds only `[Unreleased]` + one minor | fails once a second minor appears (rollover forgotten) |
 | Every feature doc has a `description` | required, ≤250 chars |
 | Relative links resolve (code fences and inline code skipped) | all `.md` files |
-| Generated files are current | `make docs && git diff --exit-code` |
+| Generated files are current | `gen-docs.py` on the CI build, then `git diff --exit-code` |
 
 When a doc goes over budget, split it. Don't raise the limit.
 

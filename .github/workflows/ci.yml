@@ -19,9 +19,8 @@ jobs:
       - name: JS unit tests
         run: node --test 'Tests/Web/**/*.test.js'
 
-      # Report-only until the docs migration's last step turns on --strict.
       - name: Check links, budgets and changelog
-        run: python3 scripts/check-docs.py
+        run: python3 scripts/check-docs.py --strict
 
       - name: Changelog release scripts
         run: scripts/test-changelog-release.sh
@@ -36,6 +35,12 @@ jobs:
 
       - name: Build
         run: swift build -c release
+
+      - name: Generated docs are current
+        run: |
+          python3 scripts/gen-docs.py .build/release/Baguette
+          git diff --exit-code -- docs/commands.md docs/README.md skills/baguette/references \
+            || { echo "::error::Generated docs are stale; run 'make docs' and commit"; exit 1; }
 
       - name: Test with coverage
         run: swift test --enable-code-coverage
