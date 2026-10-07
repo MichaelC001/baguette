@@ -10,6 +10,9 @@ For releases prior to this changelog, see the
 
 ## [Unreleased]
 
+### Fixed
+- The live 3D view (`stream.3d.mjpeg` / `stream.3d.avcc`) runs at up to 60 fps again, as smooth as the flat stream; 0.2.3's frame pacing had turned its old 20 fps setting into a hard cap. → [docs](docs/features/3d-rendering/frames.md)
+
 ---
 
 ## [0.2.3] - 2026-10-05
