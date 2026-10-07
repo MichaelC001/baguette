@@ -14,6 +14,12 @@ struct Device3DStreamOptionsTests {
         #expect(options.screenGlass == false)
     }
 
+    @Test func `should stream the live 3D view as smoothly as the flat screen stream`() throws {
+        let options = try Device3DStreamOptions.parse([:])
+
+        #expect(options.frameRate == StreamConfig.default.fps)
+    }
+
     @Test func `parses camera output and repeatable public variants`() throws {
         let options = try Device3DStreamOptions.parse([
             "rotation": ["-12,24,3"],
